@@ -11,3 +11,11 @@
 *.lai
 *.la
 *.a
+
+# Eclipse project files
+.project
+.cproject
+.settings
+
+# Generated dependency file
+.dependencies

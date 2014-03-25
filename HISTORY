@@ -1,6 +1,11 @@
 VDR Plugin 'ddci2' Revision History
 ----------------------------------
 
+2014-03-25: Version 0.0.1
+
+- Dummy source file added.
+- Makefile ready to compile the plugin. 
+
 2014-03-24: Version 0.0.1
 
 - Initial revision.
