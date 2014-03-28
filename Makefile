@@ -1,12 +1,25 @@
+##############################################################################
 #
 # Makefile for a Video Disk Recorder plugin
 #
-# $Id: Makefile 3.1 2014/01/01 13:29:54 kls Exp $
-
+# $Id: $
+#
 # If you have the VDR sources around and you would like to compile this plugin
 # outside the VDR PLUGIN directory, then compile first VDR. Then compile this
 # plugin with:
-# make VDRDIR=<path-to-vdr-dir> INCLUDES='-I$(VDRDIR)/include' LIBDIR=. 
+#   $ VDRDIR=<path-to-vdr-dir> INCLUDES='-I$(VDRDIR)/include' make
+#
+# Additionally you can set custom CXXFLAGS during development.
+#   CXXFLAGS_CUSTOM='-save-temps -<another_opt>'
+#     -save-temps .. keep preprocessor output
+#
+# Additional preprocessor macros, can be in DEFINES.
+#   DEFINES='-D_DEBUG -DOPT_DEBUG=2'
+#
+# If you like to change the directory for temp files, you can set TMPDIR
+#   TMPDIR=/opt/temp
+#
+##############################################################################
 
 # The official name of this plugin.
 # This name will be used in the '-P...' option of VDR to load the plugin.
@@ -24,13 +37,14 @@ VERSION = $(shell grep 'static const char \*VERSION *=' $(PLUGIN).cpp | awk '{ p
 PKGCFG = $(if $(VDRDIR),$(shell pkg-config --variable=$(1) $(VDRDIR)/vdr.pc),$(shell PKG_CONFIG_PATH="$$PKG_CONFIG_PATH:../../.." pkg-config --variable=$(1) vdr))
 LIBDIR = $(call PKGCFG,libdir)
 PLGCFG = $(call PKGCFG,plgcfg)
+
 #
 TMPDIR ?= /tmp
 
 ### The compiler options:
-
-export CFLAGS   = $(call PKGCFG,cflags)
-export CXXFLAGS = $(call PKGCFG,cxxflags)
+# You can use *_CUSTOM to add additional flags during development
+export CFLAGS   = $(call PKGCFG,cflags) $(CFLAGS_CUSTOM)
+export CXXFLAGS = $(call PKGCFG,cxxflags) $(CXXFLAGS_CUSTOM)
 
 ### The version number of VDR's plugin API:
 
@@ -81,7 +95,7 @@ all: $(SOFILE)
 
 MAKEDEP = $(CXX) -MM -MG
 DEPFILE = .dependencies
-$(DEPFILE): Makefile
+$(DEPFILE): Makefile $(SRCS)
 	@$(MAKEDEP) $(CXXFLAGS) $(DEFINES) $(INCLUDES) $(SRCS) > $@
 
 -include $(DEPFILE)
@@ -105,4 +119,4 @@ dist: clean
 	@echo Distribution package created as $(PACKAGE).tgz
 
 clean:
-	@-rm -f $(OBJS) $(DEPFILE) *.so *.tgz core* *~
+	@-rm -f $(OBJS) $(DEPFILE) *.so *.tgz core* *~ *.ii *.s

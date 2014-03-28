@@ -1,7 +1,19 @@
 VDR Plugin 'ddci2' Revision History
 ----------------------------------
 
-2014-03-25: Version 0.0.1
+2014-03-28: Version 0.0.4
+
+- Intermediate commit before HW tests are starting:
+  * Added newest GPLv2 COPYING file.
+  * The dependencies are now recreated, if a source file changes.
+  * README improved.
+  * Added file headers to all source files.
+  * The plugin is now ready to find the DD CI device files and to initialize
+    them. It will communicate viw the .../caX device to the CAM.
+    NOTE: The .../ciX device is currently not used! So you do still need the
+          drivers redirect feature to get a descambled stream.  
+
+2014-03-25: Version 0.0.2
 
 - Dummy source file added.
 - Makefile ready to compile the plugin. 

@@ -1,10 +1,10 @@
 This is a "plugin" for the Video Disk Recorder (VDR).
 
-Written by:                  Jasmin Jessich <jasmin@anw.at>
+Written by:                    Jasmin Jessich <jasmin@anw.at>
 
-Project's homepage:          https://github.com/jasmin-j/vdr-plugin-ddci2
+Project's homepage:            https://github.com/jasmin-j/vdr-plugin-ddci2
 
-Latest version available at: https://github.com/jasmin-j/vdr-plugin-ddci2
+Latest version available at:   https://github.com/jasmin-j/vdr-plugin-ddci2
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -12,19 +12,47 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 See the file COPYING for more information.
 
-Description:
+
+Description
+-----------
 
 A plugin which creates DVB CI adapters from "stand alone" ca-devices
 like the ones from Digital Devices.
 This plugin will work only with VDR version 2.1.6 and newer.
 
-The CI devices of the Digital Devices or Linux4Media are not bound to
-a dedicated DVB adapter. There will be only a ca- and a ci-device.
-The ca-device has to used like every other ca-device, but the packets
+The CI devices of Digital Devices or Linux4Media are not bound to a
+dedicated DVB adapter. There will be only a ca- and a ci-device. The
+ca-device has to be used like every other ca-device, but the packets
 to be descrambled have to be written to and read from the ci-device.
 This plugin obsolets the redirect method of the ddbridge kernel driver.
-~                                                                                                                          
-~                                                                                                                          
+The Kernel driver must not started with option "adapter_alloc=1|2|3"!
+
+
+Plugin Commandline
+------------------
+
+Use vdr -h to see the command line arguments supported by the plugin.
+
+  -l        --loglevel   0/1/2/3 log nothing/error/info/debug
+
+The default loglevel is info.  
+
+
+Building the plugin
+-------------------
+
+The usual way is to compile VDR plugins from within the VDR source tree.
+Checkout the plugin source tree or unpack the tgz file below
+  .../vdr/PLUGINS/src
+
+To checkout the source use:
+  $ git clone git://github.com/jasmin-j/vdr-plugin-ddci2.git ddci2
+
+If you have unpacked the tarball, the directory ddci2-<VERSION> needs to be
+renamed to ddci2. Otherwise the VDR plugin make system will not find it.
+
+To compile the plugin without the VDR plugin make system, look to the
+description in Makefile.
 ~                                                                                                                          
 ~                                                                                                                          
 ~                                                                       
