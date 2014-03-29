@@ -81,7 +81,7 @@ public:
 
 static inline bool DirentIsName(struct dirent *d, const char *name)
 {
-	return strstr(d->d_name, DEV_DVB_ADAPTER) == d->d_name;
+	return strstr(d->d_name, name) == d->d_name;
 }
 
 //------------------------------------------------------------------------
@@ -102,10 +102,15 @@ static inline cString CiDevName(const char *name, int adapter, int ci)
 
 static int CiDevOpen(const char *name, int adapter, int ci, int mode)
 {
+	LOG_FUNCTION_ENTER;
+
 	cString fname(CiDevName(name, adapter, ci));
 	int fd = open(fname, mode);
 	if (fd < 0)
 		L_ERROR_STR(*fname);
+
+	LOG_FUNCTION_EXIT;
+
 	return fd;
 }
 
@@ -113,16 +118,22 @@ static int CiDevOpen(const char *name, int adapter, int ci, int mode)
 
 void PluginDdci::Cleanup()
 {
+	LOG_FUNCTION_ENTER;
+
 	for (int i = 0; i < MAXDEVICES; i++) {
 		delete adapters[ i ];
 		adapters[ i ] = NULL;
 	}
+
+	LOG_FUNCTION_EXIT;
 }
 
 //------------------------------------------------------------------------
 
 bool PluginDdci::FindDdCi()
 {
+	LOG_FUNCTION_ENTER;
+
 	cReadDir dvbdir(DEV_DVB_BASE);
 	if (dvbdir.Ok()) {
 		dirent *a;
@@ -131,7 +142,6 @@ bool PluginDdci::FindDdCi()
 				int adapter = DirentGetNameNum(a, strlen(DEV_DVB_ADAPTER));
 				cReadDir adapterdir(AddDirectory(DEV_DVB_BASE, a->d_name));
 				if (adapterdir.Ok()) {
-					cReadDir adapterdir2(adapterdir);
 					struct dirent *f;
 					int ci = -1;
 					while ((f = adapterdir.Next()) != NULL) {
@@ -139,6 +149,7 @@ bool PluginDdci::FindDdCi()
 							ci = DirentGetNameNum(f, strlen(DEV_DVB_CI));
 
 							// there must be no frontend device!
+							cReadDir adapterdir2(AddDirectory(DEV_DVB_BASE, a->d_name));
 							struct dirent *f2;
 							while ((f2 = adapterdir2.Next()) != NULL) {
 								if (DirentIsName(f2, DEV_DVB_FRONTEND)) {
@@ -168,6 +179,8 @@ bool PluginDdci::FindDdCi()
 	} else
 		L_INF("no DD CI adapter found");
 
+	LOG_FUNCTION_EXIT;
+
 	return found > 0;
 }
 
@@ -175,12 +188,21 @@ bool PluginDdci::FindDdCi()
 
 bool PluginDdci::GetDdCi(int &adapter, int &ci)
 {
+	LOG_FUNCTION_ENTER;
+
+	bool ret = false;
+
 	for (int i = 0; i < dd_ci_names.Size(); i++) {
 		if (2 == sscanf(dd_ci_names[ i ], "%d %d", &adapter, &ci)) {
 			dd_ci_names.Remove(i);
+			ret = true;
+			break;
 		}
 	}
-	return false;
+
+	LOG_FUNCTION_EXIT;
+
+	return ret;
 }
 
 //------------------------------------------------------------------------
@@ -215,7 +237,7 @@ const char *PluginDdci::Description()
 
 const char *PluginDdci::CommandLineHelp()
 {
-	return "  -l        --loglevel   0/1/2/3 log nothing/error/info/debug\n";
+	return "  -l        --loglevel     0/1/2/3 log nothing/error/info/debug\n";
 }
 
 //------------------------------------------------------------------------
@@ -223,12 +245,12 @@ const char *PluginDdci::CommandLineHelp()
 bool PluginDdci::ProcessArgs(int argc, char *argv[])
 {
 	static struct option long_options[] = {
-		{ "loglevel", no_argument, NULL, 'l' },
+		{ "loglevel", required_argument, NULL, 'l' },
 		{ NULL, no_argument, NULL, 0 }
 	};
 
 	int c, ll;
-	while ((c = getopt_long(argc, argv, "l", long_options, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "l:", long_options, NULL)) != -1) {
 		switch (c) {
 		case 'l':
 			ll = strtol(optarg, 0, 10);
@@ -253,6 +275,8 @@ bool PluginDdci::ProcessArgs(int argc, char *argv[])
 
 bool PluginDdci::Start()
 {
+	LOG_FUNCTION_ENTER;
+
 	L_INF("plugin version %s initializing (VDR %s)", VERSION, VDRVERSION);
 
 	if (FindDdCi()) {
@@ -277,6 +301,9 @@ bool PluginDdci::Start()
 	}
 
 	L_INF("plugin started");
+
+	LOG_FUNCTION_EXIT;
+
 	return true;
 }
 

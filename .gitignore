@@ -19,3 +19,6 @@
 
 # Generated dependency file
 .dependencies
+
+# VIM error file
+errors.vim

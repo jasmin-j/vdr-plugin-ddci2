@@ -29,6 +29,11 @@
 #ifndef __LOGGING_H
 #define __LOGGING_H
 
+// configuration defaults
+#ifndef CNF_LOG_FUNCTIONS
+#define CNF_LOG_FUNCTIONS 0
+#endif
+
 /// global loglevel variable
 extern int LogLevel;
 
@@ -37,6 +42,8 @@ static const int LL_DEFAULT = 2;
 
 #define M_START  do {
 #define M_END    } while(0)
+#define M_EMPTY  M_START M_END
+
 #define LOG_X(ll, sev, txt, a...) \
 	M_START if (LogLevel >= ll) { syslog_with_tid(sev, txt a); } M_END
 
@@ -47,7 +54,24 @@ static const int LL_DEFAULT = 2;
 
 // Print file/line and strerror(errno)
 #define L_ERROR_X(a...)  LOG_X( 1, LOG_ERR, "", a )
-#define L_ERROR         L_ERROR_X( "j1DDCI-Err (%s,%d): %m", __FILE__, __LINE__ )
-#define L_ERROR_STR(s)  L_ERROR_X( "j1DDCI-Err (%s,%d): %s: %m", __FILE__, __LINE__, s )
+#define L_ERROR()        L_ERROR_X( "DDCI-Err (%s,%d): %m", __FILE__, __LINE__ )
+#define L_ERROR_STR(s)   L_ERROR_X( "DDCI-Err (%s,%d): %s: %m", __FILE__, __LINE__, s )
+
+#define L_FUNC_X(a...)          LOG_X( 3, LOG_DEBUG, "", a )
+#define L_FUNC()                L_ERROR_X( "DDCI-Dbg (%s)", __FUNCTION__ )
+#define L_FUNC_STR(s)           L_ERROR_X( "DDCI-Dbg (%s) %s", __FUNCTION__, s )
+#define L_FUNC_PRINTF(f, a...)  L_ERROR_X( "DDCI-Dbg (%s)" f, __FUNCTION__, ##a )
+
+#if CNF_LOG_FUNCTIONS
+# define LOG_FUNCTION_ENTER            L_FUNC_STR( "enter" )
+# define LOG_FUNCTION_INFO(s)          L_FUNC_STR( s )
+# define LOG_FUNCTION_PRINTF(f, a...)  L_FUNC_PRINTF( f, ##a )
+# define LOG_FUNCTION_EXIT             L_FUNC_STR( "leave" )
+#else
+# define LOG_FUNCTION_ENTER            M_EMPTY
+# define LOG_FUNCTION_INFO(s)          M_EMPTY
+# define LOG_FUNCTION_PRINTF(f, a...)  M_EMPTY
+# define LOG_FUNCTION_EXIT             M_EMPTY
+#endif
 
 #endif // __LOGGING_H

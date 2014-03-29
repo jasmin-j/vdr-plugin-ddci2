@@ -58,6 +58,7 @@ DdCiAdapter::DdCiAdapter(cDevice *dev, int ca_fd, int ci_fd, cString &devName)
 			if (NumSlots > 0) {
 				for (int i = 0; i < NumSlots; i++)
 					new cCamSlot(this);
+				L_DBG("DdCiAdapter(%s) for device %d created", *devName, device->DeviceNumber());
 				Start();
 			} else
 				L_ERR("no CAM slots found on device %d", device->DeviceNumber());
