@@ -2,8 +2,6 @@
 #
 # Makefile for a Video Disk Recorder plugin
 #
-# $Id: $
-#
 # If you have the VDR sources around and you would like to compile this plugin
 # outside the VDR PLUGIN directory, then compile first VDR. Then compile this
 # plugin with:

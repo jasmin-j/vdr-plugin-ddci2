@@ -1,14 +1,25 @@
 VDR Plugin 'ddci2' Revision History
 ----------------------------------
 
-2014-03-29: Version 0.0.5
+2014-03-30: Version 0.0.5
+
+- NOTE: This is an Intermediate commit!
+        This Plugin is currently not working propperly!
+- Introduce DdCiCamslot and DdCiTsSend classes.
+- Startup and cleanup reworked and tested.
+- Coding style changes.
+- Logging and debugging macros reworked.
+  NOTE: Starting with this commit, the drivers redirect
+        feature must no longer be used!  
+
+2014-03-29: Version 0.0.4
 
 - Communication with caX device working:
   * Argument parsing is now working.
   * Fixed double delete error in FindDdCi.
 - Added function debugging for development.
 
-2014-03-28: Version 0.0.4
+2014-03-28: Version 0.0.3
 
 - Intermediate commit before HW tests are starting:
   * Added newest GPLv2 COPYING file.

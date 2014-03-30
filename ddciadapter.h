@@ -23,16 +23,17 @@
 // You should have received a copy of the GNU General Public License
 // along with vdr_plugin_ddci2.  If not, see <http://www.gnu.org/licenses/>.
 //
-// $Id:  $
 /////////////////////////////////////////////////////////////////////////////
 
 #ifndef __DDCIADAPTER_H
 #define __DDCIADAPTER_H
 
+#include "ddcitssend.h"
+
 #include <vdr/ci.h>
 
 /**
- * This class implements the interface to the CAM device.
+ * This class implements the physical interface to the CAM device.
  */
 class DdCiAdapter: public cCiAdapter
 {
@@ -42,19 +43,22 @@ private:
 	 * creation.
 	 */
 	cDevice *device;    //< the bound device
-	int fd_ca;          //< .../frontendX/caX device file handle
-	int fd_ci;          //< .../frontendX/ciX device file handle
+	int fd;             //< .../frontendX/caX device file handle
 	cString caDevName;  //< .../frontendX/caX device path
+	DdCiTsSend ciSend;  //< the CAM TS sender
+
+	void CleanUp();
 
 protected:
 	/* see file ci.h in the VDR include directory for the description of
 	 * the following functions
 	 */
-	virtual int Read(uint8_t *Buffer, int MaxLength);
-	virtual void Write(const uint8_t *Buffer, int Length);
-	virtual bool Reset(int Slot);
-	virtual eModuleStatus ModuleStatus(int Slot);
-	virtual bool Assign(cDevice *Device, bool Query = false);
+	virtual void Action();
+	virtual int Read( uint8_t *Buffer, int MaxLength );
+	virtual void Write( const uint8_t *Buffer, int Length );
+	virtual bool Reset( int Slot );
+	virtual eModuleStatus ModuleStatus( int Slot );
+	virtual bool Assign( cDevice *Device, bool Query = false );
 
 public:
 	/**
@@ -63,15 +67,15 @@ public:
 	 * controlling thread.
 	 * @param dev the assigned device
 	 * @param ca_fd the file handle for the .../frontendX/caX device
-	 * @param ci_fd the file handle for the .../frontendX/ciX device
-	 * @param devName the name of the device (.../frontendX/ciX)
+	 * @param ci_fdw the write file handle for the .../frontendX/ciX device
+	 * @param ci_fdr the read file handle for the .../frontendX/ciX device
+	 * @param devNameCa the name of the device (.../frontendX/caX)
+	 * @param devNameCi the name of the device (.../frontendX/ciX)
 	 **/
-	DdCiAdapter(cDevice *dev, int ca_fd, int ci_fd, cString &devName);
+	DdCiAdapter( cDevice *dev, int ca_fd, int ci_fdw, int ci_fdr, cString &devNameCa, cString &devNameCi );
 
 	/// Destructor.
 	virtual ~DdCiAdapter();
-
-	// static DdCiAdapter *CreateCiAdapter(int ca_fd, int ci_fd);
 };
 
 #endif //__DDCIADAPTER_H

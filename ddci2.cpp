@@ -23,7 +23,6 @@
 // You should have received a copy of the GNU General Public License
 // along with vdr_plugin_ddci2.  If not, see <http://www.gnu.org/licenses/>.
 //
-// $Id:  $
 /////////////////////////////////////////////////////////////////////////////
 
 #include "ddciadapter.h"
@@ -34,7 +33,7 @@
 #include <getopt.h>
 #include <string.h>
 
-static const char *VERSION = "0.0.4";
+static const char *VERSION = "0.0.5";
 static const char *DESCRIPTION = "External Digital Devices CI-Adapter";
 
 static const char *DEV_DVB_CI = "ci";
@@ -107,7 +106,7 @@ static int CiDevOpen(const char *name, int adapter, int ci, int mode)
 	cString fname(CiDevName(name, adapter, ci));
 	int fd = open(fname, mode);
 	if (fd < 0)
-		L_ERROR_STR(*fname);
+		L_ERR_LINE("Couldn't open %s with mode 0x%x", *fname, mode);
 
 	LOG_FUNCTION_EXIT;
 
@@ -209,14 +208,23 @@ bool PluginDdci::GetDdCi(int &adapter, int &ci)
 
 PluginDdci::PluginDdci()
 {
+	LOG_FUNCTION_ENTER;
+
 	memset(adapters, 0x00, sizeof(adapters));
 	LogLevel = LL_DEFAULT;
+
+	LOG_FUNCTION_EXIT;
 }
 
 //------------------------------------------------------------------------
 
 PluginDdci::~PluginDdci()
 {
+	LOG_FUNCTION_ENTER;
+
+	Cleanup();
+
+	LOG_FUNCTION_EXIT;
 }
 
 //------------------------------------------------------------------------
@@ -285,15 +293,19 @@ bool PluginDdci::Start()
 				int adapter, ci;
 				if (GetDdCi(adapter, ci)) {
 					int ca_fd = CiDevOpen(DEV_DVB_CA, adapter, ci, O_RDWR);
-					int ci_fd = CiDevOpen(DEV_DVB_CI, adapter, ci, O_RDWR);
-					if ((ca_fd >= 0) && (ci_fd >= 0)) {
+					int ci_fdw = CiDevOpen(DEV_DVB_CI, adapter, ci, O_WRONLY);
+					int ci_fdr = CiDevOpen(DEV_DVB_CI, adapter, ci, O_RDONLY);
+					if ((ca_fd >= 0) && (ci_fdw >= 0) && (ci_fdr >= 0)) {
 						L_INF("Creating DdCiAdapter for device %d", device->CardIndex());
 
-						cString fname(CiDevName(DEV_DVB_CA, adapter, ci));
-						adapters[ i ] = new DdCiAdapter(device, ca_fd, ci_fd, fname);
+						cString fnameCa(CiDevName(DEV_DVB_CA, adapter, ci));
+						cString fnameCi(CiDevName(DEV_DVB_CI, adapter, ci));
+						adapters[ i ] = new DdCiAdapter(device, ca_fd, ci_fdw, ci_fdr, fnameCa, fnameCi);
 					} else {
+						L_DBG("Fds -> ca: %d, ciw: %d, cir:%d", ca_fd, ci_fdw, ci_fdr );
 						close(ca_fd);
-						close(ci_fd);
+						close(ci_fdw);
+						close(ci_fdr);
 					}
 				}
 			}
@@ -311,8 +323,12 @@ bool PluginDdci::Start()
 
 void PluginDdci::Stop()
 {
+	LOG_FUNCTION_ENTER;
+
 	Cleanup();
 	L_INF("plugin stopped");
+
+	LOG_FUNCTION_EXIT;
 }
 
 VDRPLUGINCREATOR(PluginDdci); // Don't touch this!

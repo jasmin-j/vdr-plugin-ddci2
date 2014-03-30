@@ -23,10 +23,10 @@
 // You should have received a copy of the GNU General Public License
 // along with vdr_plugin_ddci2.  If not, see <http://www.gnu.org/licenses/>.
 //
-// $Id:  $
 /////////////////////////////////////////////////////////////////////////////
 
 #include "ddciadapter.h"
+#include "ddcicamslot.h"
 #include "logging.h"
 
 #include <vdr/device.h>
@@ -34,60 +34,99 @@
 #include <sys/ioctl.h>
 #include <linux/dvb/ca.h>
 
-
 /* NOTE: Most of the code is copied from vdr/dvbci.c
  */
 
-DdCiAdapter::DdCiAdapter(cDevice *dev, int ca_fd, int ci_fd, cString &devName)
-: device(dev)
-, fd_ca(ca_fd)
-, fd_ci(ci_fd)
-, caDevName(devName)
+void DdCiAdapter::CleanUp()
 {
+	LOG_FUNCTION_ENTER;
+
+	if (fd != -1) {
+		close( fd );
+		fd = -1;
+	}
+
+	LOG_FUNCTION_EXIT;
+}
+
+//------------------------------------------------------------------------
+
+DdCiAdapter::DdCiAdapter( cDevice *dev, int ca_fd, int ci_fdw, int ci_fdr, cString &devNameCa, cString &devNameCi )
+: device( dev )
+, fd( ca_fd )
+, caDevName( devNameCa )
+, ciSend( *this, ci_fdw, devNameCi )
+{
+	LOG_FUNCTION_ENTER;
+
 	if (!dev) {
-		L_ERROR_STR("dev=NULL!");
+		L_ERROR_STR( "dev=NULL!" );
 		return;
 	}
 
-	SetDescription("DDCI adapter on device %d (%s)", device->DeviceNumber(), *devName);
+	SetDescription( "DDCI adapter on device %d (%s)", device->DeviceNumber(), *caDevName );
 
 	ca_caps_t Caps;
-	if (ioctl(fd_ca, CA_GET_CAP, &Caps) == 0) {
+	if (ioctl( fd, CA_GET_CAP, &Caps ) == 0) {
 		if ((Caps.slot_type & CA_CI_LINK) != 0) {
 			int NumSlots = Caps.slot_num;
 			if (NumSlots > 0) {
 				for (int i = 0; i < NumSlots; i++)
-					new cCamSlot(this);
-				L_DBG("DdCiAdapter(%s) for device %d created", *devName, device->DeviceNumber());
+					new DdCiCamSlot( this );
+				L_DBG( "DdCiAdapter(%s) for device %d created", *caDevName, device->DeviceNumber() );
 				Start();
 			} else
-				L_ERR("no CAM slots found on device %d", device->DeviceNumber());
+				L_ERR( "no CAM slots found on device %d", device->DeviceNumber() );
 		} else
-			L_INF("device %d doesn't support CI link layer interface", device->DeviceNumber());
+			L_INF( "device %d doesn't support CI link layer interface", device->DeviceNumber() );
 	} else
-		L_ERR("can't get CA capabilities on device %d", device->DeviceNumber());
+		L_ERR( "can't get CA capabilities on device %d", device->DeviceNumber() );
+
+	LOG_FUNCTION_EXIT;
 }
 
 //------------------------------------------------------------------------
 
 DdCiAdapter::~DdCiAdapter()
 {
-	Cancel(3);
+	LOG_FUNCTION_ENTER;
+
+	ciSend.Cancel( 3 );  // stop the TS sender thread, before we stop this thread
+	Cancel( 3 );
+	CleanUp();
+
+	LOG_FUNCTION_EXIT;
 }
 
 //------------------------------------------------------------------------
 
-int DdCiAdapter::Read(uint8_t *Buffer, int MaxLength)
+void DdCiAdapter::Action()
+{
+	LOG_FUNCTION_ENTER;
+
+	if (ciSend.Start())
+		cCiAdapter::Action();
+	else {
+		L_ERR( "couldn't start TsSend on device %d", device->DeviceNumber() );
+		Cancel( -1 );  // terminating this thread by running flag only
+	}
+
+	LOG_FUNCTION_EXIT;
+}
+
+//------------------------------------------------------------------------
+
+int DdCiAdapter::Read( uint8_t *Buffer, int MaxLength )
 {
 	if (Buffer && MaxLength > 0) {
 		struct pollfd pfd[ 1 ];
-		pfd[ 0 ].fd = fd_ca;
+		pfd[ 0 ].fd = fd;
 		pfd[ 0 ].events = POLLIN;
-		if (poll(pfd, 1, CAM_READ_TIMEOUT) > 0 && (pfd[ 0 ].revents & POLLIN)) {
-			int n = safe_read(fd_ca, Buffer, MaxLength);
+		if (poll( pfd, 1, CAM_READ_TIMEOUT ) > 0 && (pfd[ 0 ].revents & POLLIN)) {
+			int n = safe_read( fd, Buffer, MaxLength );
 			if (n >= 0)
 				return n;
-			L_ERR("can't read from CI adapter on device %d: %m", device->DeviceNumber());
+			L_ERR( "can't read from CI adapter on device %d: %m", device->DeviceNumber() );
 		}
 	}
 	return 0;
@@ -95,57 +134,47 @@ int DdCiAdapter::Read(uint8_t *Buffer, int MaxLength)
 
 //------------------------------------------------------------------------
 
-void DdCiAdapter::Write(const uint8_t *Buffer, int Length)
+void DdCiAdapter::Write( const uint8_t *Buffer, int Length )
 {
 	if (Buffer && Length > 0) {
-		if (safe_write(fd_ca, Buffer, Length) != Length)
-			L_ERR("can't write to CI adapter on device %d: %m", device->DeviceNumber());
+		if (safe_write( fd, Buffer, Length ) != Length)
+			L_ERR( "can't write to CI adapter on device %d: %m", device->DeviceNumber() );
 	}
 }
 
 //------------------------------------------------------------------------
 
-bool DdCiAdapter::Reset(int Slot)
+bool DdCiAdapter::Reset( int Slot )
 {
-	if (ioctl(fd_ca, CA_RESET, 1 << Slot) != -1)
+	if (ioctl( fd, CA_RESET, 1 << Slot ) != -1)
 		return true;
 	else
-		L_ERR("can't reset CAM slot %d on device %d: %m", Slot, device->DeviceNumber());
+		L_ERR( "can't reset CAM slot %d on device %d: %m", Slot, device->DeviceNumber() );
 	return false;
 }
 
 //------------------------------------------------------------------------
 
-eModuleStatus DdCiAdapter::ModuleStatus(int Slot)
+eModuleStatus DdCiAdapter::ModuleStatus( int Slot )
 {
 	ca_slot_info_t sinfo;
 	sinfo.num = Slot;
-	if (ioctl(fd_ca, CA_GET_SLOT_INFO, &sinfo) != -1) {
+	if (ioctl( fd, CA_GET_SLOT_INFO, &sinfo ) != -1) {
 		if ((sinfo.flags & CA_CI_MODULE_READY) != 0)
 			return msReady;
 		else if ((sinfo.flags & CA_CI_MODULE_PRESENT) != 0)
 			return msPresent;
 	} else
-		L_ERR("can't get info of CAM slot %d on device %d: %m", Slot, device->DeviceNumber());
+		L_ERR( "can't get info of CAM slot %d on device %d: %m", Slot, device->DeviceNumber() );
 	return msNone;
 }
 
 //------------------------------------------------------------------------
 
-bool DdCiAdapter::Assign(cDevice *Device, bool Query)
+bool DdCiAdapter::Assign( cDevice *Device, bool Query )
 {
 	// The CI is hardwired to its device, so there's not really much to do here
 	if (Device)
 		return Device == device;
 	return true;
 }
-
-//------------------------------------------------------------------------
-
-//DdCiAdapter *DdCiAdapter::CreateCiAdapter(cDevice *Device, int Fd)
-//{
-//  // TODO check whether a CI is actually present?
-//  if (Device)
-//     return new DdCiAdapter(Device, Fd);
-//  return NULL;
-//}

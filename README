@@ -52,7 +52,4 @@ If you have unpacked the tarball, the directory ddci2-<VERSION> needs to be
 renamed to ddci2. Otherwise the VDR plugin make system will not find it.
 
 To compile the plugin without the VDR plugin make system, look to the
-description in Makefile.
-~                                                                                                                          
-~                                                                                                                          
-~                                                                       
+description in Makefile.                                                                                                                     
