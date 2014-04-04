@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// @file ddcitssend.cpp @brief Digital Devices Common Interface plugin for VDR.
+// @file ddcitsrecv.cpp @brief Digital Devices Common Interface plugin for VDR.
 //
 // Copyright (c) 2013 - 2014 by Jasmin Jessich.  All Rights Reserved.
 //
@@ -25,7 +25,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////
 
-#include "ddcitssend.h"
+#include "ddcitsrecv.h"
 #include "ddcicommon.h"
 #include "ddciadapter.h"
 #include "logging.h"
@@ -34,7 +34,7 @@
 
 //------------------------------------------------------------------------
 
-void DdCiTsSend::CleanUp()
+void DdCiTsRecv::CleanUp()
 {
 	LOG_FUNCTION_ENTER;
 
@@ -48,22 +48,44 @@ void DdCiTsSend::CleanUp()
 
 //------------------------------------------------------------------------
 
-DdCiTsSend::DdCiTsSend( DdCiAdapter &the_adapter, int ci_fdw, cString &devNameCi )
-: cThread()
-, adapter( the_adapter )
-, fd( ci_fdw )
-, ciDevName( devNameCi )
-, rb( BUF_SIZE, BUF_MARGIN, false, "DDCI TS Send" )
+void DdCiTsRecv::Deliver()
 {
-	// don't use adapter in this function,, unless you know what you are doing!
+	while (Running()) {
+		int cnt = 0;
+		uchar *data = rb.Get( cnt );
+		if (!data)
+			return;
 
-	SetDescription( "DDCI TS Send buffer on %s", *ciDevName );
-	L_DBG( "DdCiTsSend for %s created", *ciDevName );
+		int skipped;
+		uchar *frame = CheckTsSync( data, cnt, skipped );
+		if (skipped) {
+			L_ERR_LINE( "skipped %d bytes to sync on start of TS packet", skipped );
+			rb.Del( skipped );
+		}
+
+		if (adapter.DataRecv( frame ) != -1)
+			rb.Del( TS_SIZE );
+	}
 }
 
 //------------------------------------------------------------------------
 
-DdCiTsSend::~DdCiTsSend()
+DdCiTsRecv::DdCiTsRecv( DdCiAdapter &the_adapter, int ci_fdr, cString &devNameCi )
+: cThread()
+, adapter( the_adapter )
+, fd( ci_fdr )
+, ciDevName( devNameCi )
+, rb( BUF_SIZE, BUF_MARGIN, false, "DDCI TS Recv" )
+{
+	// don't use adapter in this function,, unless you know what you are doing!
+
+	SetDescription( "DDCI TS Recv buffer on %s", *ciDevName );
+	L_DBG( "DdCiTsRecv for %s created", *ciDevName );
+}
+
+//------------------------------------------------------------------------
+
+DdCiTsRecv::~DdCiTsRecv()
 {
 	LOG_FUNCTION_ENTER;
 
@@ -75,7 +97,7 @@ DdCiTsSend::~DdCiTsSend()
 
 //------------------------------------------------------------------------
 
-bool DdCiTsSend::Start()
+bool DdCiTsRecv::Start()
 {
 	LOG_FUNCTION_ENTER;
 
@@ -91,7 +113,7 @@ bool DdCiTsSend::Start()
 
 //------------------------------------------------------------------------
 
-void DdCiTsSend::Cancel( int waitSec )
+void DdCiTsRecv::Cancel( int waitSec )
 {
 	LOG_FUNCTION_ENTER;
 
@@ -102,57 +124,29 @@ void DdCiTsSend::Cancel( int waitSec )
 
 //------------------------------------------------------------------------
 
-int DdCiTsSend::Write( const uchar *data, int count )
+void DdCiTsRecv::Action()
 {
-	if (count % TS_SIZE)
-		L_ERR_LINE("Got a truncated frame");
-
-	mutex.Lock();
-	int written = rb.Put( data, count );
-	mutex.Unlock();
-
-	if (written % TS_SIZE)
-		L_ERR_LINE("Couldn't write a whole frame to CI send buffer");
-
-	return written;
-}
-
-//------------------------------------------------------------------------
-
-void DdCiTsSend::Action()
-{
-	static const int RUN_CHECK_TMO = 100;   // get may wait 100ms
+	static const int RUN_POLL_TMO = 100;   // get may wait 100ms
 
 	LOG_FUNCTION_ENTER;
 
-	rb.SetTimeouts( 0, RUN_CHECK_TMO );
+	rb.SetTimeouts( RUN_POLL_TMO, 0 );
+
+	bool firstRead( true );
+	cPoller Poller( fd );
 
 	while (Running()) {
-		int cnt = 0;
-		uchar *data = rb.Get( cnt );
-		if (data) {
-			int skipped;
-			uchar *frame = CheckTsSync( data, cnt, skipped );
-			if (skipped) {
-				L_ERR_LINE( "skipped %d bytes to sync on start of TS packet", skipped );
-				rb.Del( skipped );
-			}
-
-			int len = cnt - skipped;
-			len -= (len % TS_SIZE);
-			if (len >= TS_SIZE) {
-				int w = WriteAllOrNothing( fd, frame, len, 5 * RUN_CHECK_TMO, RUN_CHECK_TMO );
-				if (w >= 0) {
-					int remain = len - w;
-					if (remain > 0) {
-						L_ERR_LINE( "couldn't write all data to CAM %s", *ciDevName );
-						len -= remain;
-					}
-				} else {
-					L_ERR_LINE( "couldn't write to CAM %s:%m", *ciDevName );
+		if (firstRead || Poller.Poll( RUN_POLL_TMO )) {
+			firstRead = false;
+			errno = 0;
+			int r = rb.Read( fd );
+			if ((r < 0) && FATALERRNO) {
+				if (errno == EOVERFLOW)
+					L_ERR_LINE( "Driver buffer overflow on file %s:%m", *ciDevName );
+				else {
+					L_ERROR();
 					break;
 				}
-				rb.Del( len );
 			}
 		}
 	}

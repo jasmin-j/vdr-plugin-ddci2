@@ -32,17 +32,14 @@
 
 // forward declarations
 class DdCiAdapter;
+class DdCiTsSend;
 
 /**
  * This class implements the logical interface to one slot of the CAM device.
  */
 class DdCiCamSlot: public cCamSlot
 {
-	/* NOTE: Implement the ddcitssend class as pointer and check always before using
-	 * because during ehoutdown, the tssendbuffer is deleted first
-	 */
-
-
+	DdCiTsSend &ciSend;  //< the CAM TS sender
 
 public:
 	/**
@@ -51,12 +48,12 @@ public:
 	 * The adapter will take care of deleting the CAM slot, so the caller must
 	 * not delete it!
 	 * @param adapter the CAM adapter this slot is associated
+	 * @param the buffer for the TS packets
 	 **/
-	DdCiCamSlot(DdCiAdapter *adapter);
+	DdCiCamSlot(DdCiAdapter &adapter, DdCiTsSend &sendCi);
 
 	/// Destructor.
 	virtual ~DdCiCamSlot();
-
 
 	/* see file ci.h in the VDR include directory for the description of
 	 * the following functions

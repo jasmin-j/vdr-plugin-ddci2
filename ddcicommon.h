@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// @file ddcicamslot.cpp @brief Digital Devices Common Interface plugin for VDR.
+// @file ddcicommon.h @brief Digital Devices Common Interface plugin for VDR.
 //
 // Copyright (c) 2013 - 2014 by Jasmin Jessich.  All Rights Reserved.
 //
@@ -25,38 +25,26 @@
 //
 /////////////////////////////////////////////////////////////////////////////
 
-#include "ddcicamslot.h"
-#include "ddciadapter.h"
-#include "ddcitssend.h"
-#include "logging.h"
+#ifndef __DDCICOMMON_H
+#define __DDCICOMMON_H
 
-//------------------------------------------------------------------------
+#include <vdr/tools.h>
 
-DdCiCamSlot::DdCiCamSlot( DdCiAdapter &adapter, DdCiTsSend &sendCi )
-: cCamSlot( &adapter, true )
-, ciSend( sendCi )
-{
-	LOG_FUNCTION_ENTER;
-	LOG_FUNCTION_EXIT;
-}
 
-//------------------------------------------------------------------------
+/*
+ * General purpose functions
+ */
 
-DdCiCamSlot::~DdCiCamSlot()
-{
-	LOG_FUNCTION_ENTER;
-	LOG_FUNCTION_EXIT;
-}
+/**
+ * Checks if on the first position of data the TS_SYNC_BYTE is present. if
+ * not, it is searched and skipped is set to the number of skipped bytes.
+ * You need to check skipped on function return, to determine, if the returned
+ * pointer is valid or not.
+ * @param data the data to check/find
+ * @param length the length of the data
+ * @param skipped number of bytes skipped in data
+ * @return pointer to TS_SYNC_BYTE
+ */
+extern uchar *CheckTsSync( uchar *data, int length, int &skipped );
 
-//------------------------------------------------------------------------
-
-uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
-{
-	uchar *ret( 0 );
-
-	int stored = ciSend.Write( Data, Count );
-	Count = stored;
-
-	// FIXME: Implement read buffer reading
-	return ret;
-}
+#endif //__DDCICOMMON_H

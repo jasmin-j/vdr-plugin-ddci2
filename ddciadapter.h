@@ -29,6 +29,7 @@
 #define __DDCIADAPTER_H
 
 #include "ddcitssend.h"
+#include "ddcitsrecv.h"
 
 #include <vdr/ci.h>
 
@@ -46,6 +47,7 @@ private:
 	int fd;             //< .../frontendX/caX device file handle
 	cString caDevName;  //< .../frontendX/caX device path
 	DdCiTsSend ciSend;  //< the CAM TS sender
+	DdCiTsRecv ciRecv;  //< the CAM TS receiver
 
 	void CleanUp();
 
@@ -76,6 +78,17 @@ public:
 
 	/// Destructor.
 	virtual ~DdCiAdapter();
+
+	/**
+	 * Deliver the received CAM TS Data to the CAM slot.
+	 * data is always only one TS data packet of size TS_SIZE and it is
+	 * guaranteed, that the first byte of data is a TS_SYNC_BYTE.
+	 * @param data the received data to
+	 * @return 0 .. data delivered
+	 *        -1 .. receiver buffer full
+	 *        -2 .. no appropriate target found, discard data
+	 */
+	int DataRecv( const uchar *data );
 };
 
 #endif //__DDCIADAPTER_H

@@ -19,6 +19,8 @@
 #
 ##############################################################################
 
+.DELETE_ON_ERROR:
+
 # The official name of this plugin.
 # This name will be used in the '-P...' option of VDR to load the plugin.
 # By default the main source file also carries this name.
@@ -41,8 +43,20 @@ TMPDIR ?= /tmp
 
 ### The compiler options:
 # You can use *_CUSTOM to add additional flags during development
-export CFLAGS   = $(call PKGCFG,cflags) $(CFLAGS_CUSTOM)
-export CXXFLAGS = $(call PKGCFG,cxxflags) $(CXXFLAGS_CUSTOM)
+CFLAGS_1   = $(call PKGCFG,cflags) $(CFLAGS_CUSTOM)
+CXXFLAGS_1 = $(call PKGCFG,cxxflags) $(CXXFLAGS_CUSTOM)
+
+# use no optimization for debug build 
+ifneq ($(strip $(DEBUG)),)
+CFLAGS_2   = $(filter-out -O3, $(CFLAGS_1)) -O0
+CXXFLAGS_2 = $(filter-out -O3, $(CXXFLAGS_1)) -O0
+else
+CFLAGS_2   = $(CFLAGS_1)
+CXXFLAGS_2 = $(CXXFLAGS_1)
+endif  
+
+export CFLAGS   = $(CFLAGS_2)
+export CXXFLAGS = $(CXXFLAGS_2)
 
 ### The version number of VDR's plugin API:
 

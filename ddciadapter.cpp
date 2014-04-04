@@ -37,6 +37,8 @@
 /* NOTE: Most of the code is copied from vdr/dvbci.c
  */
 
+//------------------------------------------------------------------------
+
 void DdCiAdapter::CleanUp()
 {
 	LOG_FUNCTION_ENTER;
@@ -56,6 +58,7 @@ DdCiAdapter::DdCiAdapter( cDevice *dev, int ca_fd, int ci_fdw, int ci_fdr, cStri
 , fd( ca_fd )
 , caDevName( devNameCa )
 , ciSend( *this, ci_fdw, devNameCi )
+, ciRecv( *this, ci_fdr, devNameCi )
 {
 	LOG_FUNCTION_ENTER;
 
@@ -72,7 +75,7 @@ DdCiAdapter::DdCiAdapter( cDevice *dev, int ca_fd, int ci_fdw, int ci_fdr, cStri
 			int NumSlots = Caps.slot_num;
 			if (NumSlots > 0) {
 				for (int i = 0; i < NumSlots; i++)
-					new DdCiCamSlot( this );
+					new DdCiCamSlot( *this, ciSend );
 				L_DBG( "DdCiAdapter(%s) for device %d created", *caDevName, device->DeviceNumber() );
 				Start();
 			} else
@@ -92,10 +95,18 @@ DdCiAdapter::~DdCiAdapter()
 	LOG_FUNCTION_ENTER;
 
 	ciSend.Cancel( 3 );  // stop the TS sender thread, before we stop this thread
+	ciRecv.Cancel( 3 );  // stop the TS receiver thread, before we stop this thread
 	Cancel( 3 );
 	CleanUp();
 
 	LOG_FUNCTION_EXIT;
+}
+
+//------------------------------------------------------------------------
+
+int DdCiAdapter::DataRecv( const uchar *data )
+{
+	return 0;
 }
 
 //------------------------------------------------------------------------
@@ -105,11 +116,14 @@ void DdCiAdapter::Action()
 	LOG_FUNCTION_ENTER;
 
 	if (ciSend.Start())
-		cCiAdapter::Action();
-	else {
-		L_ERR( "couldn't start TsSend on device %d", device->DeviceNumber() );
-		Cancel( -1 );  // terminating this thread by running flag only
-	}
+		if (ciRecv.Start())
+			cCiAdapter::Action();
+		else {
+			L_ERR( "couldn't start CAM TS Recv on device %d", device->DeviceNumber() );
+			ciSend.Cancel( 3 );
+		}
+	else
+		L_ERR( "couldn't start CAM TS Send on device %d", device->DeviceNumber() );
 
 	LOG_FUNCTION_EXIT;
 }

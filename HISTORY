@@ -1,6 +1,15 @@
 VDR Plugin 'ddci2' Revision History
 ----------------------------------
 
+2014-04-04: Version 0.0.6
+
+- NOTE: This is an Intermediate commit!
+        This Plugin is currently not working propperly!
+- Introduce DdCiTsRecv class and new file for common functions.
+- Added an error message, when not all TS data could be written to the CAM.
+- If environment variable DEBUG is set, the compiler is invoked with no
+  optimization option. This is usefull for GDB debugging.
+
 2014-03-30: Version 0.0.5
 
 - NOTE: This is an Intermediate commit!

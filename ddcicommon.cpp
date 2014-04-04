@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// @file ddcicamslot.cpp @brief Digital Devices Common Interface plugin for VDR.
+// @file ddcicommon.cpp @brief Digital Devices Common Interface plugin for VDR.
 //
 // Copyright (c) 2013 - 2014 by Jasmin Jessich.  All Rights Reserved.
 //
@@ -25,38 +25,22 @@
 //
 /////////////////////////////////////////////////////////////////////////////
 
-#include "ddcicamslot.h"
-#include "ddciadapter.h"
-#include "ddcitssend.h"
-#include "logging.h"
+#include "ddcicommon.h"
+
+#include <vdr/remux.h>   // TS_SIZE, TS_SYNC_BYTE
 
 //------------------------------------------------------------------------
 
-DdCiCamSlot::DdCiCamSlot( DdCiAdapter &adapter, DdCiTsSend &sendCi )
-: cCamSlot( &adapter, true )
-, ciSend( sendCi )
+uchar *CheckTsSync( uchar *data, int length, int &skipped )
 {
-	LOG_FUNCTION_ENTER;
-	LOG_FUNCTION_EXIT;
-}
-
-//------------------------------------------------------------------------
-
-DdCiCamSlot::~DdCiCamSlot()
-{
-	LOG_FUNCTION_ENTER;
-	LOG_FUNCTION_EXIT;
-}
-
-//------------------------------------------------------------------------
-
-uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
-{
-	uchar *ret( 0 );
-
-	int stored = ciSend.Write( Data, Count );
-	Count = stored;
-
-	// FIXME: Implement read buffer reading
-	return ret;
+	skipped = 0;
+	if (*data != TS_SYNC_BYTE) {
+		skipped = 1;
+		while (skipped < length
+				&& (data[ skipped ] != TS_SYNC_BYTE
+						|| (((length - skipped) > TS_SIZE) && (data[ skipped + TS_SIZE ] != TS_SYNC_BYTE)))) {
+			skipped++;
+		}
+	}
+	return data + skipped;
 }
