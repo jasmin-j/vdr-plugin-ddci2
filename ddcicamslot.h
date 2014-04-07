@@ -28,6 +28,8 @@
 #ifndef __DDCICAMSLOT_H
 #define __DDCICAMSLOT_H
 
+#include "ddcirecvbuf.h"
+
 #include <vdr/ci.h>
 
 // forward declarations
@@ -39,7 +41,12 @@ class DdCiTsSend;
  */
 class DdCiCamSlot: public cCamSlot
 {
-	DdCiTsSend &ciSend;  //< the CAM TS sender
+	DdCiTsSend &ciSend;   //< the CAM TS sender
+	DdCiRecvBuf rBuffer;  //< the receive buffer
+	bool delivered;       //< true, if Decrypt did deliver data at last call
+	bool active;          //< true, if this slot does decrypting
+
+	void StopIt();
 
 public:
 	/**
@@ -60,7 +67,6 @@ public:
 	 */
 
 	/*
-	virtual bool Reset(void);
 	virtual eModuleStatus ModuleStatus(void);
 	virtual const char *GetCamName(void);
 	virtual bool Ready(void);
@@ -74,10 +80,12 @@ public:
 	virtual void SetPid(int Pid, bool Active);
 	virtual void AddChannel(const cChannel *Channel);
 	virtual bool CanDecrypt(const cChannel *Channel);
-	virtual void StartDecrypting(void);
-	virtual void StopDecrypting(void);
 	virtual bool IsDecrypting(void);
 	*/
+
+	virtual bool Reset(void);
+	virtual void StartDecrypting(void);
+	virtual void StopDecrypting(void);
 
 	/**
 	 * For a detailed description have a look to file ci.h in the VDR include
@@ -94,6 +102,17 @@ public:
 	 *        0, if the CAM receive buffer buffer is empty.
 	 **/
 	virtual uchar *Decrypt(uchar *Data, int &Count);
+
+	/**
+	 * Deliver the received CAM TS Data to the CAM slot.
+	 * data is always only one TS data packet of size TS_SIZE and it is
+	 * guaranteed, that the first byte of data is a TS_SYNC_BYTE.
+	 * @param data the received data to
+	 * @return 0 .. data delivered
+	 *        -1 .. receiver buffer full
+	 *        -2 .. no appropriate target found, discard data
+	 */
+	int DataRecv( uchar *data );
 };
 
 #endif //__DDCICAMSLOT_H

@@ -47,7 +47,11 @@ private:
 	int fd;                //< .../frontendX/ciX device write file handle
 	cString ciDevName;     //< .../frontendX/ciX device path
 	cRingBufferLinear rb;  //< the send buffer
-	cMutex mutex;          //< The synchronization mutex for rb
+	cMutex mtxWrite;       //< The synchronization mutex for rb write access
+	int pkgCntR;           //< package read counter
+	int pkgCntW;           //< package write counter
+	bool clear;            //< true, when the buffer shall be cleared
+	cMutex mtxClear;       //< clearing is not thread save
 
 	static const int BUF_NUM = 1000;
 	static const int BUF_MARGIN = TS_SIZE;
@@ -73,11 +77,13 @@ public:
 	bool Start();
 	void Cancel( int waitSec = 0 );
 
+	void ClrBuffer();
+
 	/**
 	 * Write as most of the given data to the send buffer.
 	 * This function is thread save for multiple writers.
 	 * @param data the data to send
-	 * @param count the length of the data
+	 * @param count the length of the data (have to be a multiple of TS_SIZE!)
 	 * @return the number of bytes actually written
 	 */
 	int Write(const uchar *data, int count);

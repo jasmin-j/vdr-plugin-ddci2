@@ -33,7 +33,7 @@
 #include <getopt.h>
 #include <string.h>
 
-static const char *VERSION = "0.0.6";
+static const char *VERSION = "0.0.7";
 static const char *DESCRIPTION = "External Digital Devices CI-Adapter";
 
 static const char *DEV_DVB_CI = "ci";
@@ -294,7 +294,7 @@ bool PluginDdci::Start()
 				if (GetDdCi(adapter, ci)) {
 					int ca_fd = CiDevOpen(DEV_DVB_CA, adapter, ci, O_RDWR);
 					int ci_fdw = CiDevOpen(DEV_DVB_CI, adapter, ci, O_WRONLY);
-					int ci_fdr = CiDevOpen(DEV_DVB_CI, adapter, ci, O_RDONLY);
+					int ci_fdr = CiDevOpen(DEV_DVB_CI, adapter, ci, O_RDONLY | O_NONBLOCK);
 					if ((ca_fd >= 0) && (ci_fdw >= 0) && (ci_fdr >= 0)) {
 						L_INF("Creating DdCiAdapter for device %d", device->CardIndex());
 

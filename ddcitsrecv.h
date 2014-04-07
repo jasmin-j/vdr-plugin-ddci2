@@ -28,8 +28,10 @@
 #ifndef __DDCITSRECV_H
 #define __DDCITSRECV_H
 
+#include "ddcireadbuf.h"
+#include "ddcitsrecvdeliver.h"
+
 #include <vdr/thread.h>
-#include <vdr/ringbuffer.h>
 #include <vdr/remux.h>   // TS_SIZE, TS_SYNC_BYTE
 
 // forward declarations
@@ -46,16 +48,19 @@ private:
 	DdCiAdapter &adapter;  //< the associated CI adapter
 	int fd;                //< .../frontendX/ciX device read file handle
 	cString ciDevName;     //< .../frontendX/ciX device path
-	cRingBufferLinear rb;  //< the send buffer
+	DdCiReadBuf rb;        //< the CAM read buffer
+	int pkgCntR;           //< package read counter
+	int pkgCntW;           //< package write counter
+	bool clear;            //< true, when the buffer shall be cleared
+	cMutex mtxClear;       //< clearing is not thread save
+	DdCiTsRecvDeliver tsdeliver; //< TS Data deliver thread
 
-	static const int BUF_NUM = 1000;
-	static const int BUF_MARGIN = TS_SIZE;
-
-	// cRingBufferLinear requires one margin and 1 byte for internal reasons
-	static const int BUF_SIZE = (BUF_MARGIN * (BUF_NUM + 1)) + 1;
+	/* there is a limit of the buffer in the DD driver, so we should try to read
+	 * from the hardware again, when this size is free in the buffer
+	 */
+	static const int BUF_READ_THRESHOLD = 100 * TS_SIZE;
 
 	void CleanUp();
-	void Deliver();
 
 public:
 	/**
@@ -72,6 +77,10 @@ public:
 
 	bool Start();
 	void Cancel( int waitSec = 0 );
+
+	void ClrBuffer();
+
+	void Deliver();
 
 	/**
 	 * Waits for data present from the CAM and tries to deliver it.

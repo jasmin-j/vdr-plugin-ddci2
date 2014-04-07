@@ -33,6 +33,9 @@
 
 #include <vdr/ci.h>
 
+// forward declarations
+class DdCiCamSlot;
+
 /**
  * This class implements the physical interface to the CAM device.
  */
@@ -48,6 +51,9 @@ private:
 	cString caDevName;  //< .../frontendX/caX device path
 	DdCiTsSend ciSend;  //< the CAM TS sender
 	DdCiTsRecv ciRecv;  //< the CAM TS receiver
+
+	// FIXME: after VDR base class change, this is not necessary
+	DdCiCamSlot *camSlot;  //< the one and only slot of a DD CI adapter
 
 	void CleanUp();
 
@@ -80,7 +86,7 @@ public:
 	virtual ~DdCiAdapter();
 
 	/**
-	 * Deliver the received CAM TS Data to the CAM slot.
+	 * Deliver the received CAM TS Data to the receive buffer.
 	 * data is always only one TS data packet of size TS_SIZE and it is
 	 * guaranteed, that the first byte of data is a TS_SYNC_BYTE.
 	 * @param data the received data to
@@ -88,7 +94,7 @@ public:
 	 *        -1 .. receiver buffer full
 	 *        -2 .. no appropriate target found, discard data
 	 */
-	int DataRecv( const uchar *data );
+	int DataRecv( uchar *data );
 };
 
 #endif //__DDCIADAPTER_H

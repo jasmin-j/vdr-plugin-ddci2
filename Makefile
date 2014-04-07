@@ -17,6 +17,11 @@
 # If you like to change the directory for temp files, you can set TMPDIR
 #   TMPDIR=/opt/temp
 #
+# To generate the shared library without optimization, define DEBUG.
+#
+# All the above variables needs to be defined with "export var=..." (bash), or
+# written before "make" (see '$' line at the beginning).  
+#
 ##############################################################################
 
 .DELETE_ON_ERROR:

@@ -32,6 +32,8 @@
 
 #include <vdr/tools.h>
 
+static const int RUN_TMO = 100;   // our sleeping period (ms)
+
 //------------------------------------------------------------------------
 
 void DdCiTsRecv::CleanUp()
@@ -48,39 +50,25 @@ void DdCiTsRecv::CleanUp()
 
 //------------------------------------------------------------------------
 
-void DdCiTsRecv::Deliver()
-{
-	while (Running()) {
-		int cnt = 0;
-		uchar *data = rb.Get( cnt );
-		if (!data)
-			return;
-
-		int skipped;
-		uchar *frame = CheckTsSync( data, cnt, skipped );
-		if (skipped) {
-			L_ERR_LINE( "skipped %d bytes to sync on start of TS packet", skipped );
-			rb.Del( skipped );
-		}
-
-		if (adapter.DataRecv( frame ) != -1)
-			rb.Del( TS_SIZE );
-	}
-}
-
-//------------------------------------------------------------------------
-
 DdCiTsRecv::DdCiTsRecv( DdCiAdapter &the_adapter, int ci_fdr, cString &devNameCi )
 : cThread()
 , adapter( the_adapter )
 , fd( ci_fdr )
 , ciDevName( devNameCi )
-, rb( BUF_SIZE, BUF_MARGIN, false, "DDCI TS Recv" )
+, rb()
+, pkgCntR( 0 )
+, pkgCntW( 0 )
+, clear( false )
+, tsdeliver( *this, devNameCi )
 {
-	// don't use adapter in this function,, unless you know what you are doing!
+	LOG_FUNCTION_ENTER;
 
-	SetDescription( "DDCI TS Recv buffer on %s", *ciDevName );
+	// don't use adapter in this function, unless you know what you are doing!
+
+	SetDescription( "DDCI Recv (%s)", *ciDevName );
 	L_DBG( "DdCiTsRecv for %s created", *ciDevName );
+
+	LOG_FUNCTION_EXIT;
 }
 
 //------------------------------------------------------------------------
@@ -124,22 +112,78 @@ void DdCiTsRecv::Cancel( int waitSec )
 
 //------------------------------------------------------------------------
 
-void DdCiTsRecv::Action()
+void DdCiTsRecv::ClrBuffer()
 {
-	static const int RUN_POLL_TMO = 100;   // get may wait 100ms
-
 	LOG_FUNCTION_ENTER;
 
-	rb.SetTimeouts( RUN_POLL_TMO, 0 );
+	clear = true;
 
-	bool firstRead( true );
+	LOG_FUNCTION_EXIT;
+}
+
+//------------------------------------------------------------------------
+
+void DdCiTsRecv::Deliver()
+{
+	while (Running()) {
+		if (clear) {
+			cMutexLock( mtxClear );
+			rb.Clear();
+			clear = false;
+		}
+
+		int cnt = 0;
+		uchar *data = rb.Get( cnt );
+		if (!data || cnt < TS_SIZE)
+			continue;
+
+		int skipped;
+		uchar *frame = CheckTsSync( data, cnt, skipped );
+		if (skipped) {
+			L_ERR_LINE( "skipped %d bytes to sync on start of TS packet", skipped );
+			rb.Del( skipped );
+			cnt -= skipped;
+		}
+
+		if (cnt < TS_SIZE)
+			continue;
+
+		if (adapter.DataRecv( frame ) != -1) {
+			rb.Del( TS_SIZE );
+			++pkgCntR;
+			// L_DBG( "TS_SIZE delivered avail %d", rb.Available() );
+		} else {
+			/* The receive buffer of the adapter is full, so we need to wait a
+			 * little bit.
+			 */
+			cCondWait::SleepMs( RUN_TMO );
+		}
+	}
+}
+
+//------------------------------------------------------------------------
+
+void DdCiTsRecv::Action()
+{
+	LOG_FUNCTION_ENTER;
+
 	cPoller Poller( fd );
 
+	if (!tsdeliver.Start()) {
+		L_ERR_LINE( "Couldn't start deliver thread" );
+		return;
+	}
+
+	cTimeMs t(3000);
+
 	while (Running()) {
-		if (firstRead || Poller.Poll( RUN_POLL_TMO )) {
-			firstRead = false;
+		if (Poller.Poll( RUN_TMO )) {
+			mtxClear.Lock();
+//			L_DBG( "DdCiTsRecv: free %d, BufSize %d", rb.Free(), rb.Available() );
 			errno = 0;
-			int r = rb.Read( fd );
+			int r = rb.ReadJunk( fd );
+//			L_DBG( "DdCiTsRecv: r %d, f %d, a %d", r, rb.Free(), rb.Available() );
+			mtxClear.Unlock();
 			if ((r < 0) && FATALERRNO) {
 				if (errno == EOVERFLOW)
 					L_ERR_LINE( "Driver buffer overflow on file %s:%m", *ciDevName );
@@ -148,9 +192,16 @@ void DdCiTsRecv::Action()
 					break;
 				}
 			}
+			pkgCntW += r / TS_SIZE;
+		}
+
+		if (t.TimedOut()) {
+//			L_DBG( "DdCiTsRecv: R %d, W %d", pkgCntR, pkgCntW );
+			t.Set(3000);
 		}
 	}
 
+	tsdeliver.Cancel( 3 );
 	CleanUp();
 
 	LOG_FUNCTION_EXIT;

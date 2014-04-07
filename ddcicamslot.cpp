@@ -32,9 +32,22 @@
 
 //------------------------------------------------------------------------
 
+void DdCiCamSlot::StopIt()
+{
+	active = false;
+	rBuffer.Clear();
+
+	// FIXME: need to be removed for MTD
+	ciSend.ClrBuffer();
+}
+
+//------------------------------------------------------------------------
+
 DdCiCamSlot::DdCiCamSlot( DdCiAdapter &adapter, DdCiTsSend &sendCi )
 : cCamSlot( &adapter, true )
 , ciSend( sendCi )
+, delivered( false )
+, active( false )
 {
 	LOG_FUNCTION_ENTER;
 	LOG_FUNCTION_EXIT;
@@ -50,13 +63,107 @@ DdCiCamSlot::~DdCiCamSlot()
 
 //------------------------------------------------------------------------
 
+bool DdCiCamSlot::Reset()
+{
+	LOG_FUNCTION_ENTER;
+
+	L_FUNC_NAME();
+
+	bool ret = cCamSlot::Reset();
+	if (ret)
+		StopIt();
+
+	LOG_FUNCTION_EXIT;
+
+	return ret;
+}
+
+//------------------------------------------------------------------------
+
+void DdCiCamSlot::StartDecrypting()
+{
+	LOG_FUNCTION_ENTER;
+
+	L_FUNC_NAME();
+
+	StopIt();
+	active = true;
+	cCamSlot::StartDecrypting();
+
+	LOG_FUNCTION_EXIT;
+}
+
+//------------------------------------------------------------------------
+
+void DdCiCamSlot::StopDecrypting()
+{
+	LOG_FUNCTION_ENTER;
+
+	L_FUNC_NAME();
+
+	cCamSlot::StopDecrypting();
+	StopIt();
+
+	LOG_FUNCTION_EXIT;
+}
+
+//------------------------------------------------------------------------
+
 uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 {
-	uchar *ret( 0 );
+	if (!active) {
+		L_ERR_LINE( "Decrypt in deactivated state ?!?" );
+		Count = 0;
+		return 0;
+	}
 
-	int stored = ciSend.Write( Data, Count );
+	/*
+	 *  WRITE
+	 */
+
+	int cnt = Count - (Count % TS_SIZE);  // we write only whole TS frames
+
+	int stored = ciSend.Write( Data, cnt );
 	Count = stored;
 
-	// FIXME: Implement read buffer reading
-	return ret;
+	/*
+	 * READ
+	 */
+
+	if (delivered) {
+		rBuffer.Del( TS_SIZE );
+		delivered = false;
+	}
+
+	cnt = 0;
+	uchar *data = rBuffer.Get( cnt );
+	if (!data || (cnt < TS_SIZE)) {
+		data = 0;
+	}
+	else
+		delivered = true;
+
+	return data;
+}
+
+//------------------------------------------------------------------------
+
+int DdCiCamSlot::DataRecv( uchar *data )
+{
+	if (!active) {
+		return 0;
+	}
+
+	int written = -1;     // default, try again
+
+	int free = rBuffer.Free();
+	if (free >= TS_SIZE) {
+		free = TS_SIZE;
+		written = rBuffer.Put( data, free );
+		if (written != free)
+			L_ERR_LINE( "Couldn't write previously checked free data ?!?" );
+		written = 0;
+	}
+
+	return written;
 }

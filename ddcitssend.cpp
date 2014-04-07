@@ -53,12 +53,20 @@ DdCiTsSend::DdCiTsSend( DdCiAdapter &the_adapter, int ci_fdw, cString &devNameCi
 , adapter( the_adapter )
 , fd( ci_fdw )
 , ciDevName( devNameCi )
-, rb( BUF_SIZE, BUF_MARGIN, false, "DDCI TS Send" )
+, rb( BUF_SIZE, BUF_MARGIN, true, "DDCI CAM Send" )
+, pkgCntR( 0 )
+, pkgCntW( 0 )
+, clear( false )
 {
+	LOG_FUNCTION_ENTER;
+
 	// don't use adapter in this function,, unless you know what you are doing!
 
-	SetDescription( "DDCI TS Send buffer on %s", *ciDevName );
+	SetDescription( "DDCI Send (%s)", *ciDevName );
 	L_DBG( "DdCiTsSend for %s created", *ciDevName );
+
+
+	LOG_FUNCTION_EXIT;
 }
 
 //------------------------------------------------------------------------
@@ -102,17 +110,38 @@ void DdCiTsSend::Cancel( int waitSec )
 
 //------------------------------------------------------------------------
 
+void DdCiTsSend::ClrBuffer()
+{
+	LOG_FUNCTION_ENTER;
+
+	clear = true;
+
+	LOG_FUNCTION_EXIT;
+}
+
+//------------------------------------------------------------------------
+
 int DdCiTsSend::Write( const uchar *data, int count )
 {
-	if (count % TS_SIZE)
-		L_ERR_LINE("Got a truncated frame");
+	/* The lock is currently not necessary, because there can be only one
+	 * device attached to a CAM. But we implement the lock now, to be prepared
+	 * for the future.
+	 */
+	cMutexLock( mtxWrite );
 
-	mutex.Lock();
-	int written = rb.Put( data, count );
-	mutex.Unlock();
+	int written = 0;
 
-	if (written % TS_SIZE)
-		L_ERR_LINE("Couldn't write a whole frame to CI send buffer");
+	cMutexLock( mtxClear );
+	int free = rb.Free();
+	if (free > count)
+		free = count;
+	free -= free % TS_SIZE;     // only whole TS frames must be written
+	if (free > 0) {
+		written = rb.Put( data, free );
+		pkgCntW += written / TS_SIZE;
+		if (written != free)
+			L_ERR_LINE( "Couldn't write previously checked free data ?!?" );
+	}
 
 	return written;
 }
@@ -126,11 +155,18 @@ void DdCiTsSend::Action()
 	LOG_FUNCTION_ENTER;
 
 	rb.SetTimeouts( 0, RUN_CHECK_TMO );
+	cTimeMs t(3000);
 
 	while (Running()) {
+		if (clear) {
+			cMutexLock( mtxClear );
+			rb.Clear();
+			clear = false;
+		}
+
 		int cnt = 0;
 		uchar *data = rb.Get( cnt );
-		if (data) {
+		if (data && cnt >= TS_SIZE) {
 			int skipped;
 			uchar *frame = CheckTsSync( data, cnt, skipped );
 			if (skipped) {
@@ -148,12 +184,19 @@ void DdCiTsSend::Action()
 						L_ERR_LINE( "couldn't write all data to CAM %s", *ciDevName );
 						len -= remain;
 					}
+
 				} else {
 					L_ERR_LINE( "couldn't write to CAM %s:%m", *ciDevName );
 					break;
 				}
 				rb.Del( len );
+				pkgCntR += w / TS_SIZE;
+//				L_DBG( "DdCiTsSend: w %d, f %d, a %d", w, rb.Free(), rb.Available() );
 			}
+		}
+		if (t.TimedOut()) {
+//			L_DBG( "DdCiTsSend: R %d, W %d", pkgCntR, pkgCntW );
+			t.Set(3000);
 		}
 	}
 

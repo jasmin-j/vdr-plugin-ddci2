@@ -59,6 +59,7 @@ DdCiAdapter::DdCiAdapter( cDevice *dev, int ca_fd, int ci_fdw, int ci_fdr, cStri
 , caDevName( devNameCa )
 , ciSend( *this, ci_fdw, devNameCi )
 , ciRecv( *this, ci_fdr, devNameCi )
+, camSlot( 0 )
 {
 	LOG_FUNCTION_ENTER;
 
@@ -74,8 +75,13 @@ DdCiAdapter::DdCiAdapter( cDevice *dev, int ca_fd, int ci_fdw, int ci_fdr, cStri
 		if ((Caps.slot_type & CA_CI_LINK) != 0) {
 			int NumSlots = Caps.slot_num;
 			if (NumSlots > 0) {
-				for (int i = 0; i < NumSlots; i++)
-					new DdCiCamSlot( *this, ciSend );
+				for (int i = 0; i < NumSlots; i++) {
+					if (!camSlot) {
+						camSlot = new DdCiCamSlot( *this, ciSend );
+					} else {
+						L_ERR( "Currently only ONE CAM slot supported" );
+					}
+				}
 				L_DBG( "DdCiAdapter(%s) for device %d created", *caDevName, device->DeviceNumber() );
 				Start();
 			} else
@@ -104,9 +110,16 @@ DdCiAdapter::~DdCiAdapter()
 
 //------------------------------------------------------------------------
 
-int DdCiAdapter::DataRecv( const uchar *data )
+int DdCiAdapter::DataRecv( uchar *data )
 {
-	return 0;
+	int ret = 0;
+
+	if ( camSlot ) {
+		camSlot->DataRecv( data );
+	} else
+		ret = -2;
+
+	return ret;
 }
 
 //------------------------------------------------------------------------
@@ -160,6 +173,9 @@ void DdCiAdapter::Write( const uint8_t *Buffer, int Length )
 
 bool DdCiAdapter::Reset( int Slot )
 {
+	ciRecv.ClrBuffer();
+	ciSend.ClrBuffer();
+
 	if (ioctl( fd, CA_RESET, 1 << Slot ) != -1)
 		return true;
 	else
@@ -187,7 +203,7 @@ eModuleStatus DdCiAdapter::ModuleStatus( int Slot )
 
 bool DdCiAdapter::Assign( cDevice *Device, bool Query )
 {
-	// The CI is hardwired to its device, so there's not really much to do here
+	// Currently no MTD, so we can hardwired the CI to its device
 	if (Device)
 		return Device == device;
 	return true;

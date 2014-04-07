@@ -68,6 +68,9 @@ static const int LL_DEFAULT = 2;
 #define L_INF(a...)  LOG_X( 2, LOG_INFO,  "DDCI-Inf: ", ##a )
 #define L_DBG(a...)  LOG_X( 3, LOG_DEBUG, "DDCI-Dbg: ", ##a )
 
+// Print current function
+# define L_FUNC_NAME()  L_FUNC_STR( "" )
+
 // Print file/line and any printf format
 #define L_ERR_LINE(f, a...)  L_ERR_X( "DDCI-Err (%s,%d): " f, __FILE__, __LINE__, ##a )
 
