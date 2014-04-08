@@ -44,3 +44,19 @@ uchar *CheckTsSync( uchar *data, int length, int &skipped )
 	}
 	return data + skipped;
 }
+
+//------------------------------------------------------------------------
+
+bool CheckAllSync( uchar *data, int length, uchar *&posnsync )
+{
+	posnsync = NULL;
+	length -= length % TS_SIZE;
+	int len = 0;
+	while ((len < length) && data[len] == TS_SYNC_BYTE) {
+		len += TS_SIZE;
+	}
+	bool ret = (len != length);
+	if (!ret)
+		posnsync = &data[len];
+	return ret;
+}

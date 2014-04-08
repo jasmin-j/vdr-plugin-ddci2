@@ -43,7 +43,7 @@ int inline DdCiReadBuf::ReadBlock( int FileHandle, uchar *Data, int Size )
 //------------------------------------------------------------------------
 
 DdCiReadBuf::DdCiReadBuf()
-: cRingBufferLinear( BUF_SIZE, BUF_MARGIN, true, "DDCI CAM Recv" )
+: cRingBufferLinear( BUF_SIZE, BUF_MARGIN, false, "DDCI CAM Recv" )
 {
 	LOG_FUNCTION_ENTER;
 	LOG_FUNCTION_EXIT;

@@ -36,6 +36,7 @@ void DdCiCamSlot::StopIt()
 {
 	active = false;
 	rBuffer.Clear();
+	delivered = false;
 
 	// FIXME: need to be removed for MTD
 	ciSend.ClrBuffer();
@@ -121,8 +122,12 @@ uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 	 *  WRITE
 	 */
 
-	int cnt = Count - (Count % TS_SIZE);  // we write only whole TS frames
-
+	/* It would be possible to store more of the given data, but this did
+	 * not work during my tests. So we need to write frame by frame to the
+	 * send buffer.
+	 */
+	// int cnt = Count - (Count % TS_SIZE);  // we write only whole TS frames
+	int cnt = TS_SIZE;
 	int stored = ciSend.Write( Data, cnt );
 	Count = stored;
 
@@ -130,6 +135,11 @@ uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 	 * READ
 	 */
 
+	/* Decrypt is called for each frame and we need to return the decoded
+	 * frame. But there is no "I_have_the_frame_consumed" function, so the
+	 * only chance we have is to delete now the last sent frame from the
+	 * buffer.
+	 */
 	if (delivered) {
 		rBuffer.Del( TS_SIZE );
 		delivered = false;

@@ -53,7 +53,7 @@ DdCiTsSend::DdCiTsSend( DdCiAdapter &the_adapter, int ci_fdw, cString &devNameCi
 , adapter( the_adapter )
 , fd( ci_fdw )
 , ciDevName( devNameCi )
-, rb( BUF_SIZE, BUF_MARGIN, true, "DDCI CAM Send" )
+, rb( BUF_SIZE, BUF_MARGIN, false, "DDCI CAM Send" )
 , pkgCntR( 0 )
 , pkgCntW( 0 )
 , clear( false )
@@ -64,7 +64,6 @@ DdCiTsSend::DdCiTsSend( DdCiAdapter &the_adapter, int ci_fdw, cString &devNameCi
 
 	SetDescription( "DDCI Send (%s)", *ciDevName );
 	L_DBG( "DdCiTsSend for %s created", *ciDevName );
-
 
 	LOG_FUNCTION_EXIT;
 }
@@ -161,6 +160,8 @@ void DdCiTsSend::Action()
 		if (clear) {
 			cMutexLock( mtxClear );
 			rb.Clear();
+			// pkgCntW = 0;
+			// pkgCntR = 0;
 			clear = false;
 		}
 
@@ -189,13 +190,13 @@ void DdCiTsSend::Action()
 					L_ERR_LINE( "couldn't write to CAM %s:%m", *ciDevName );
 					break;
 				}
-				rb.Del( len );
+				rb.Del( w );
 				pkgCntR += w / TS_SIZE;
-//				L_DBG( "DdCiTsSend: w %d, f %d, a %d", w, rb.Free(), rb.Available() );
 			}
 		}
+
 		if (t.TimedOut()) {
-//			L_DBG( "DdCiTsSend: R %d, W %d", pkgCntR, pkgCntW );
+			// L_DBG( "DdCiTsSend: BufW %d, CAMsent %d", pkgCntW, pkgCntR );
 			t.Set(3000);
 		}
 	}

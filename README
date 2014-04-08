@@ -41,6 +41,45 @@ The default loglevel is info.
 Building the plugin
 -------------------
 
+*****************************************************************************
+**
+**  NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
+**
+**  This Plugin will compile only, when you change a header file in the VDR
+**  include directory. The reason ist, that the class cRingBufferLinear
+**  declares its members as private, istead of protected. This plugin
+**  enhances cRingBufferLinear by a function (ReadJunk) to read in junks of
+**  TS_SIZE (margin). This is required by the current ddbridge Kernel driver.
+**  I hope Klaus will use my new function in his Base Class, so that this
+**  change is no longer required. I will try to modify the ddbridge Kernel
+**  driver, too. But this needs testing time, which I currently not have.
+**  So change in file ringbuffer.h line 60 from "private:" to "protected:". 
+**
+**  NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
+**
+*****************************************************************************
+
+Here is a patch for VDR version 2.1.6. copy the lines between the "---cut---"
+lines in a file, cd to the vdr directory and use "patch -p1 -i <your-file>"
+to apply it.
+---------------------cut--------------------
+diff --git a/ringbuffer.h b/ringbuffer.h
+index a975742..3f0ea05 100644
+--- a/ringbuffer.h
++++ b/ringbuffer.h
+@@ -57,7 +57,8 @@ private:
+ public:
+   static void PrintDebugRBL(void);
+ #endif
+-private:
++//private:
++protected:
+   int margin, head, tail;
+   int gotten;
+   uchar *buffer;
+---------------------cut--------------------
+
+
 The usual way is to compile VDR plugins from within the VDR source tree.
 Checkout the plugin source tree or unpack the tgz file below
   .../vdr/PLUGINS/src

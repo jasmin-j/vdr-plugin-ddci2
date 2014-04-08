@@ -129,6 +129,8 @@ void DdCiTsRecv::Deliver()
 		if (clear) {
 			cMutexLock( mtxClear );
 			rb.Clear();
+			// pkgCntW = 0;
+			// pkgCntR = 0;
 			clear = false;
 		}
 
@@ -151,7 +153,6 @@ void DdCiTsRecv::Deliver()
 		if (adapter.DataRecv( frame ) != -1) {
 			rb.Del( TS_SIZE );
 			++pkgCntR;
-			// L_DBG( "TS_SIZE delivered avail %d", rb.Available() );
 		} else {
 			/* The receive buffer of the adapter is full, so we need to wait a
 			 * little bit.
@@ -178,11 +179,9 @@ void DdCiTsRecv::Action()
 
 	while (Running()) {
 		if (Poller.Poll( RUN_TMO )) {
-			mtxClear.Lock();
-//			L_DBG( "DdCiTsRecv: free %d, BufSize %d", rb.Free(), rb.Available() );
 			errno = 0;
+			mtxClear.Lock();
 			int r = rb.ReadJunk( fd );
-//			L_DBG( "DdCiTsRecv: r %d, f %d, a %d", r, rb.Free(), rb.Available() );
 			mtxClear.Unlock();
 			if ((r < 0) && FATALERRNO) {
 				if (errno == EOVERFLOW)
@@ -196,7 +195,7 @@ void DdCiTsRecv::Action()
 		}
 
 		if (t.TimedOut()) {
-//			L_DBG( "DdCiTsRecv: R %d, W %d", pkgCntR, pkgCntW );
+			// L_DBG( "DdCiTsRecv: CAMrcv %d, AdptrSent %d", pkgCntW, pkgCntR );
 			t.Set(3000);
 		}
 	}

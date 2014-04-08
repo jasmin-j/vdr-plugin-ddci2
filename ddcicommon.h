@@ -47,4 +47,16 @@
  */
 extern uchar *CheckTsSync( uchar *data, int length, int &skipped );
 
+/**
+ * Checks if the whole buffer contains every TS_SIZE a TS_SYNC_BYTE, beginning
+ * with the first byte. The search stops at the first non TS_SYNC_BYTE position.
+ * posnsync is set to the first non TS_SYNC_BYTE position or NULL, if the whole
+ * buffer contains the expected TS_SYNC_BYTEs.
+ * @param data the data to check
+ * @param length the length of the data
+ * @param posnsync set to the first non TS_SYNC_BYTE position
+ * @return true, if the whole buffer contains the expected TS_SYNC_BYTEs
+ */
+extern bool CheckAllSync( uchar *data, int length, uchar *&posnsync );
+
 #endif //__DDCICOMMON_H
