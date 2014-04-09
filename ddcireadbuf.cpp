@@ -59,7 +59,7 @@ DdCiReadBuf::~DdCiReadBuf()
 
 //------------------------------------------------------------------------
 
-int DdCiReadBuf::ReadJunk( int FileHandle, int Max )
+int DdCiReadBuf::ReadChunk( int FileHandle, int Max )
 {
 	int Tail = tail;
 	int rest = Size() - head;

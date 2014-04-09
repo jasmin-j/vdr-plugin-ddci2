@@ -53,10 +53,10 @@ public:
 	/// Destructor.
 	virtual ~DdCiReadBuf();
 
-	int ReadJunk( int FileHandle, int Max = 0 );
-    ///< Reads at most Max bytes in junks of margin from FileHandle and stores
+	int ReadChunk( int FileHandle, int Max = 0 );
+    ///< Reads at most Max bytes in chunks of margin from FileHandle and stores
     ///< them in the ring buffer. If Max is 0, reads as many bytes as possible
-	///< in junks of margin. Only one actual read() call is done.
+	///< in chunks of margin. Only one actual read() call is done.
 	///< Returns the number of bytes actually read and stored, or
 	///< an error value from the actual read() call.
 };

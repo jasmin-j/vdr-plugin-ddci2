@@ -181,7 +181,7 @@ void DdCiTsRecv::Action()
 		if (Poller.Poll( RUN_TMO )) {
 			errno = 0;
 			mtxClear.Lock();
-			int r = rb.ReadJunk( fd );
+			int r = rb.ReadChunk( fd );
 			mtxClear.Unlock();
 			if ((r < 0) && FATALERRNO) {
 				if (errno == EOVERFLOW)
