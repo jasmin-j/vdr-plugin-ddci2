@@ -194,8 +194,6 @@ void DdCiTsRecv::Action()
 				}
 			}
 			pkgCntW += r / TS_SIZE;
-			if (r < TS_SIZE)
-				L_DBG("Got %d", r);
 		}
 
 		if (t.TimedOut()) {
