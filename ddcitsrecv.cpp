@@ -175,6 +175,7 @@ void DdCiTsRecv::Action()
 		return;
 	}
 
+	rb.SetTimeouts( 0, RUN_TMO );
 	cTimeMs t(3000);
 
 	while (Running()) {
@@ -182,6 +183,7 @@ void DdCiTsRecv::Action()
 			errno = 0;
 			mtxClear.Lock();
 			int r = rb.ReadChunk( fd );
+			// int r = rb.Read( fd );
 			mtxClear.Unlock();
 			if ((r < 0) && FATALERRNO) {
 				if (errno == EOVERFLOW)
@@ -192,6 +194,8 @@ void DdCiTsRecv::Action()
 				}
 			}
 			pkgCntW += r / TS_SIZE;
+			if (r < TS_SIZE)
+				L_DBG("Got %d", r);
 		}
 
 		if (t.TimedOut()) {

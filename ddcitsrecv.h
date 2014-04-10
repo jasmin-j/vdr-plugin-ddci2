@@ -55,11 +55,6 @@ private:
 	cMutex mtxClear;       //< clearing is not thread save
 	DdCiTsRecvDeliver tsdeliver; //< TS Data deliver thread
 
-	/* there is a limit of the buffer in the DD driver, so we should try to read
-	 * from the hardware again, when this size is free in the buffer
-	 */
-	static const int BUF_READ_THRESHOLD = 100 * TS_SIZE;
-
 	void CleanUp();
 
 public:
