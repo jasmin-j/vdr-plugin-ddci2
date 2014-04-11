@@ -29,11 +29,12 @@
 #include "logging.h"
 
 #include <vdr/plugin.h>
+#include <vdr/device.h>
 
 #include <getopt.h>
 #include <string.h>
 
-static const char *VERSION = "0.0.11";
+static const char *VERSION = "0.0.12";
 static const char *DESCRIPTION = "External Digital Devices CI-Adapter";
 
 static const char *DEV_DVB_CI = "ci";
@@ -289,7 +290,9 @@ bool PluginDdci::Start()
 
 	if (FindDdCi()) {
 		for (int i = 0; i < cDevice::NumDevices(); i++) {
-			if (cDevice *device = cDevice::GetDevice( i )) {
+			cDevice *device = cDevice::GetDevice( i );
+			// no CAM assigned?
+			if (device && (device->CamSlot() == NULL)) {
 				int adapter, ci;
 				if (GetDdCi( adapter, ci )) {
 					int ca_fd = CiDevOpen( DEV_DVB_CA, adapter, ci, O_RDWR );

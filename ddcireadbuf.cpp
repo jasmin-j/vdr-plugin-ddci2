@@ -26,6 +26,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #include "ddcireadbuf.h"
+#include "ddcicommon.h"
 #include "logging.h"
 
 //------------------------------------------------------------------------
@@ -43,7 +44,7 @@ int inline DdCiReadBuf::ReadBlock( int FileHandle, uchar *Data, int Size )
 //------------------------------------------------------------------------
 
 DdCiReadBuf::DdCiReadBuf()
-: cRingBufferLinear( BUF_SIZE, BUF_MARGIN, false, "DDCI CAM Recv" )
+: cRingBufferLinear( BUF_SIZE, BUF_MARGIN, STAT_DDCIREADBUF, "DDCI CAM Recv" )
 {
 	LOG_FUNCTION_ENTER;
 	LOG_FUNCTION_EXIT;

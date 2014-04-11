@@ -53,7 +53,7 @@ DdCiTsSend::DdCiTsSend( DdCiAdapter &the_adapter, int ci_fdw, cString &devNameCi
 , adapter( the_adapter )
 , fd( ci_fdw )
 , ciDevName( devNameCi )
-, rb( BUF_SIZE, BUF_MARGIN, false, "DDCI CAM Send" )
+, rb( BUF_SIZE, BUF_MARGIN, STAT_DDCITSSENDBUF, "DDCI CAM Send" )
 , pkgCntR( 0 )
 , pkgCntW( 0 )
 , clear( false )

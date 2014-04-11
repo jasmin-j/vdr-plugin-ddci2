@@ -30,6 +30,17 @@
 
 #include <vdr/tools.h>
 
+/*
+ * General definitions
+ */
+
+#ifndef STAT_BUFF_DEFAULT
+# define STAT_BUFF_DEFAULT  false
+#endif
+
+static const bool STAT_DDCIRECVBUF    = STAT_BUFF_DEFAULT;
+static const bool STAT_DDCITSSENDBUF  = STAT_BUFF_DEFAULT;
+static const bool STAT_DDCIREADBUF    = STAT_BUFF_DEFAULT;
 
 /*
  * General purpose functions

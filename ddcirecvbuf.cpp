@@ -26,12 +26,13 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #include "ddcirecvbuf.h"
+#include "ddcicommon.h"
 #include "logging.h"
 
 //------------------------------------------------------------------------
 
 DdCiRecvBuf::DdCiRecvBuf()
-: cRingBufferLinear( BUF_SIZE, BUF_MARGIN, false, "DDCI Slot Recv" )
+: cRingBufferLinear( BUF_SIZE, BUF_MARGIN, STAT_DDCIRECVBUF, "DDCI Slot Recv" )
 {
 	LOG_FUNCTION_ENTER;
 	LOG_FUNCTION_EXIT;
