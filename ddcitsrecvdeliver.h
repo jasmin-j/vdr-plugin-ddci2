@@ -29,6 +29,7 @@
 #define __DDCITSRECVDELIVER_H
 
 #include <vdr/thread.h>
+#include <vdr/tools.h>
 
 // forward declarations
 class DdCiTsRecv;

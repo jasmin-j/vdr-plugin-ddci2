@@ -28,11 +28,11 @@
 #ifndef __DDCITSRECV_H
 #define __DDCITSRECV_H
 
-#include "ddcireadbuf.h"
 #include "ddcitsrecvdeliver.h"
 
 #include <vdr/thread.h>
 #include <vdr/remux.h>   // TS_SIZE, TS_SYNC_BYTE
+#include <vdr/ringbuffer.h>
 
 // forward declarations
 class DdCiAdapter;
@@ -48,12 +48,18 @@ private:
 	DdCiAdapter &adapter;  //< the associated CI adapter
 	int fd;                //< .../frontendX/ciX device read file handle
 	cString ciDevName;     //< .../frontendX/ciX device path
-	DdCiReadBuf rb;        //< the CAM read buffer
+	cRingBufferLinear rb;  //< the CAM read buffer
 	int pkgCntR;           //< package read counter
 	int pkgCntW;           //< package write counter
 	bool clear;            //< true, when the buffer shall be cleared
 	cMutex mtxClear;       //< clearing is not thread save
 	DdCiTsRecvDeliver tsdeliver; //< TS Data deliver thread
+
+	static const int BUF_NUM = 2000;
+	static const int BUF_MARGIN = TS_SIZE;
+
+	// cRingBufferLinear requires one margin and 1 byte for internal reasons
+	static const int BUF_SIZE = (BUF_MARGIN * (BUF_NUM + 1)) + 1;
 
 	void CleanUp();
 

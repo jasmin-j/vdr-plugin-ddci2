@@ -55,7 +55,7 @@ DdCiTsRecv::DdCiTsRecv( DdCiAdapter &the_adapter, int ci_fdr, cString &devNameCi
 , adapter( the_adapter )
 , fd( ci_fdr )
 , ciDevName( devNameCi )
-, rb()
+, rb( BUF_SIZE, BUF_MARGIN, STAT_DDCITSRECVBUF, "DDCI CAM Recv" )
 , pkgCntR( 0 )
 , pkgCntW( 0 )
 , clear( false )
@@ -182,8 +182,7 @@ void DdCiTsRecv::Action()
 		if (Poller.Poll( RUN_TMO )) {
 			errno = 0;
 			mtxClear.Lock();
-			int r = rb.ReadChunk( fd );
-			// int r = rb.Read( fd );
+			int r = rb.Read( fd );
 			mtxClear.Unlock();
 			if ((r < 0) && FATALERRNO) {
 				if (errno == EOVERFLOW)
