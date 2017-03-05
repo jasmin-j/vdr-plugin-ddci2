@@ -51,10 +51,23 @@ void DdCiAdapter::CleanUp()
 	LOG_FUNCTION_EXIT;
 }
 
+int DdCiAdapter::GetDeviceNumber(cDevice *Device)
+{
+	cDevice *dev = Device;
+
+	if (!dev)
+		dev = device;
+
+	if (dev)
+		return dev->DeviceNumber() + 1;
+	else
+		return -1;
+}
+
 //------------------------------------------------------------------------
 
-DdCiAdapter::DdCiAdapter( cDevice *dev, int ca_fd, int ci_fdw, int ci_fdr, cString &devNameCa, cString &devNameCi )
-: device( dev )
+DdCiAdapter::DdCiAdapter( int ca_fd, int ci_fdw, int ci_fdr, cString &devNameCa, cString &devNameCi )
+: device( NULL )
 , fd( ca_fd )
 , caDevName( devNameCa )
 , ciSend( *this, ci_fdw, devNameCi )
@@ -63,12 +76,7 @@ DdCiAdapter::DdCiAdapter( cDevice *dev, int ca_fd, int ci_fdw, int ci_fdr, cStri
 {
 	LOG_FUNCTION_ENTER;
 
-	if (!dev) {
-		L_ERROR_STR( "dev=NULL!" );
-		return;
-	}
-
-	SetDescription( "DDCI adapter on device %d (%s)", device->DeviceNumber(), *caDevName );
+	SetDescription( "DDCI adapter %s", *caDevName );
 
 	ca_caps_t Caps;
 	if (ioctl( fd, CA_GET_CAP, &Caps ) == 0) {
@@ -79,17 +87,18 @@ DdCiAdapter::DdCiAdapter( cDevice *dev, int ca_fd, int ci_fdw, int ci_fdr, cStri
 					if (!camSlot) {
 						camSlot = new DdCiCamSlot( *this, ciSend );
 					} else {
-						L_ERR( "Currently only ONE CAM slot supported" );
+						L_ERR( "CAM(%s) Currently only ONE CAM slot supported", GetCaDevName() );
 					}
 				}
-				L_DBG( "DdCiAdapter(%s) for device %d created", *caDevName, device->DeviceNumber() );
+				L_DBG( "DdCiAdapter(%s) created: DescrNum: %d, DescrType: %d, SlotNum: %d, , SlotType: %d"
+					 , GetCaDevName(), Caps.descr_num, Caps.descr_type, Caps.slot_num, Caps.slot_type );
 				Start();
 			} else
-				L_ERR( "no CAM slots found on device %d", device->DeviceNumber() );
+				L_ERR( "no CAM slots found on CAM(%s)", GetCaDevName() );
 		} else
-			L_INF( "device %d doesn't support CI link layer interface", device->DeviceNumber() );
+			L_INF( "CAM(%s) doesn't support CI link layer interface", GetCaDevName() );
 	} else
-		L_ERR( "can't get CA capabilities on device %d", device->DeviceNumber() );
+		L_ERR( "can't get CA capabilities from CAM(%s)", GetCaDevName() );
 
 	LOG_FUNCTION_EXIT;
 }
@@ -132,11 +141,11 @@ void DdCiAdapter::Action()
 		if (ciRecv.Start())
 			cCiAdapter::Action();
 		else {
-			L_ERR( "couldn't start CAM TS Recv on device %d", device->DeviceNumber() );
+			L_ERR( "couldn't start CAM TS Recv on device %d", GetDeviceNumber() );
 			ciSend.Cancel( 3 );
 		}
 	else
-		L_ERR( "couldn't start CAM TS Send on device %d", device->DeviceNumber() );
+		L_ERR( "couldn't start CAM TS Send on device %d", GetDeviceNumber() );
 
 	LOG_FUNCTION_EXIT;
 }
@@ -153,7 +162,7 @@ int DdCiAdapter::Read( uint8_t *Buffer, int MaxLength )
 			int n = safe_read( fd, Buffer, MaxLength );
 			if (n >= 0)
 				return n;
-			L_ERR( "can't read from CI adapter on device %d: %m", device->DeviceNumber() );
+			L_ERR( "can't read from CI adapter on device %d: %m", GetDeviceNumber() );
 		}
 	}
 	return 0;
@@ -165,7 +174,7 @@ void DdCiAdapter::Write( const uint8_t *Buffer, int Length )
 {
 	if (Buffer && Length > 0) {
 		if (safe_write( fd, Buffer, Length ) != Length)
-			L_ERR( "can't write to CI adapter on device %d: %m", device->DeviceNumber() );
+			L_ERR( "can't write to CI adapter on device %d: %m", GetDeviceNumber() );
 	}
 }
 
@@ -179,7 +188,7 @@ bool DdCiAdapter::Reset( int Slot )
 	if (ioctl( fd, CA_RESET, 1 << Slot ) != -1)
 		return true;
 	else
-		L_ERR( "can't reset CAM slot %d on device %d: %m", Slot, device->DeviceNumber() );
+		L_ERR( "can't reset CAM slot %d on device %d: %m", Slot, GetDeviceNumber() );
 	return false;
 }
 
@@ -195,7 +204,7 @@ eModuleStatus DdCiAdapter::ModuleStatus( int Slot )
 		else if ((sinfo.flags & CA_CI_MODULE_PRESENT) != 0)
 			return msPresent;
 	} else
-		L_ERR( "can't get info of CAM slot %d on device %d: %m", Slot, device->DeviceNumber() );
+		L_ERR( "can't get info of CAM slot %d on device %d: %m", Slot, GetDeviceNumber() );
 	return msNone;
 }
 
@@ -203,8 +212,20 @@ eModuleStatus DdCiAdapter::ModuleStatus( int Slot )
 
 bool DdCiAdapter::Assign( cDevice *Device, bool Query )
 {
-	// Currently no MTD, so we can hardwired the CI to its device
-	if (Device)
-		return Device == device;
-	return true;
+	// Currently no MTD, so we can need to check only one device
+
+	bool ret = true;
+
+	if (Device && device)  // want to assign and there is already an assignment?
+		ret = (Device == device);  // needs to be the same device
+
+	if (!Query && ret) {  // is it an allowed de/assignment?
+		if (Device)
+			L_DBG( "DdCiAdapter(%s) assigned to device %d", *caDevName, GetDeviceNumber(Device) );
+		else if (device)
+			L_DBG( "DdCiAdapter(%s) unassigned from device %d", *caDevName, GetDeviceNumber() );
+		device = Device;
+	}
+
+	return ret;
 }

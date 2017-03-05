@@ -34,7 +34,7 @@
 #include <getopt.h>
 #include <string.h>
 
-static const char *VERSION = "0.0.13";
+static const char *VERSION = "0.0.14";
 static const char *DESCRIPTION = "External Digital Devices CI-Adapter";
 
 static const char *DEV_DVB_CI = "ci";
@@ -107,7 +107,7 @@ static int CiDevOpen( const char *name, int adapter, int ci, int mode )
 	cString fname( CiDevName( name, adapter, ci ) );
 	int fd = open( fname, mode );
 	if (fd < 0)
-		L_ERR_LINE( "Couldn't open %s with mode 0x%x", *fname, mode );
+		L_ERR_LINE( "Couldn't open %s with mode 0x%x: %m", *fname, mode );
 
 	LOG_FUNCTION_EXIT;
 
@@ -286,31 +286,29 @@ bool PluginDdci::Start()
 {
 	LOG_FUNCTION_ENTER;
 
-	L_INF( "plugin version %s initializing (VDR %s)", VERSION, VDRVERSION );
+	L_INF( "plugin version %s initializing (compiled for VDR version %s)", VERSION, VDRVERSION );
 
 	if (FindDdCi()) {
-		for (int i = 0; i < cDevice::NumDevices(); i++) {
-			cDevice *device = cDevice::GetDevice( i );
-			// no CAM assigned?
-			if (device && (device->CamSlot() == NULL)) {
-				int adapter, ci;
-				if (GetDdCi( adapter, ci )) {
-					int ca_fd = CiDevOpen( DEV_DVB_CA, adapter, ci, O_RDWR );
-					int ci_fdw = CiDevOpen( DEV_DVB_CI, adapter, ci, O_WRONLY );
-					int ci_fdr = CiDevOpen( DEV_DVB_CI, adapter, ci, O_RDONLY | O_NONBLOCK );
-					if ((ca_fd >= 0) && (ci_fdw >= 0) && (ci_fdr >= 0)) {
-						L_INF( "Creating DdCiAdapter for device %d", device->CardIndex() );
+		int adapter, ci, i=0;
+		if (GetDdCi( adapter, ci )) {
+			L_DBG( "Try to open ca%d", adapter );
+			int ca_fd = CiDevOpen( DEV_DVB_CA, adapter, ci, O_RDWR );
+			L_DBG( "Try to open ci%d-w", adapter );
+			int ci_fdw = CiDevOpen( DEV_DVB_CI, adapter, ci, O_WRONLY );
+			L_DBG( "Try to open ci%d-r", adapter );
+			int ci_fdr = CiDevOpen( DEV_DVB_CI, adapter, ci, O_RDONLY | O_NONBLOCK );
+			if ((ca_fd >= 0) && (ci_fdw >= 0) && (ci_fdr >= 0)) {
+				cString fnameCa( CiDevName( DEV_DVB_CA, adapter, ci ) );
+				cString fnameCi( CiDevName( DEV_DVB_CI, adapter, ci ) );
 
-						cString fnameCa( CiDevName( DEV_DVB_CA, adapter, ci ) );
-						cString fnameCi( CiDevName( DEV_DVB_CI, adapter, ci ) );
-						adapters[ i ] = new DdCiAdapter( device, ca_fd, ci_fdw, ci_fdr, fnameCa, fnameCi );
-					} else {
-						L_DBG( "Fds -> ca: %d, ciw: %d, cir:%d", ca_fd, ci_fdw, ci_fdr );
-						close( ca_fd );
-						close( ci_fdw );
-						close( ci_fdr );
-					}
-				}
+				L_INF( "Creating DdCiAdapter %d (%s)", i, (const char *)fnameCa );
+
+				adapters[ i ] = new DdCiAdapter( ca_fd, ci_fdw, ci_fdr, fnameCa, fnameCi );
+			} else {
+				L_DBG( "Fds -> ca: %d, ciw: %d, cir:%d", ca_fd, ci_fdw, ci_fdr );
+				close( ca_fd );
+				close( ci_fdw );
+				close( ci_fdr );
 			}
 		}
 	}

@@ -18,7 +18,7 @@ Description
 
 A plugin which creates DVB CI adapters from "stand alone" ca-devices
 like the ones from Digital Devices.
-This plugin will work ONLY with VDR version 2.1.6 and newer.
+This plugin will work ONLY with VDR version 2.1.7 and newer.
 
 The CI devices of Digital Devices or Linux4Media are not bound to a
 dedicated DVB adapter. There will be only a ca- and a ci-device. The

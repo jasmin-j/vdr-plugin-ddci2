@@ -42,9 +42,7 @@ class DdCiCamSlot;
 class DdCiAdapter: public cCiAdapter
 {
 private:
-	/* VDR currently allows only *one* device per CI adapter. Moreover,
-	 * it is bound in a 1:1 relation to that device, just from the
-	 * creation.
+	/* VDR currently allows only *one* device per CI adapter.
 	 */
 	cDevice *device;    //< the bound device
 	int fd;             //< .../frontendX/caX device file handle
@@ -56,6 +54,9 @@ private:
 	DdCiCamSlot *camSlot;  //< the one and only slot of a DD CI adapter
 
 	void CleanUp();
+	const char *GetCaDevName() { return caDevName; };
+	// Get device number from given device or the bound device
+	int GetDeviceNumber( cDevice *Device = NULL );
 
 protected:
 	/* see file ci.h in the VDR include directory for the description of
@@ -73,14 +74,13 @@ public:
 	 * Constructor.
 	 * Checks for the available slots of the CAM and starts the
 	 * controlling thread.
-	 * @param dev the assigned device
 	 * @param ca_fd the file handle for the .../frontendX/caX device
 	 * @param ci_fdw the write file handle for the .../frontendX/ciX device
 	 * @param ci_fdr the read file handle for the .../frontendX/ciX device
 	 * @param devNameCa the name of the device (.../frontendX/caX)
 	 * @param devNameCi the name of the device (.../frontendX/ciX)
 	 **/
-	DdCiAdapter( cDevice *dev, int ca_fd, int ci_fdw, int ci_fdr, cString &devNameCa, cString &devNameCi );
+	DdCiAdapter( int ca_fd, int ci_fdw, int ci_fdr, cString &devNameCa, cString &devNameCi );
 
 	/// Destructor.
 	virtual ~DdCiAdapter();
