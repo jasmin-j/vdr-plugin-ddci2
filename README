@@ -38,6 +38,15 @@ Use vdr -h to see the command line arguments supported by the plugin.
 The default loglevel is info.  
 
 
+Pitfalls
+--------
+
+If you see this message in syslog:
+  DDCI-Err (ddci2.cpp,110): Couldn't open /dev/dvb/adapterX/ciY with mode 0x800:
+          Device or resource busy
+then you might forget to remove the redirect assignment in the driver.
+
+
 Building the plugin
 -------------------
 
