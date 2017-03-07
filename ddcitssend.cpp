@@ -126,11 +126,11 @@ int DdCiTsSend::Write( const uchar *data, int count )
 	 * device attached to a CAM. But we implement the lock now, to be prepared
 	 * for the future.
 	 */
-	cMutexLock( mtxWrite );
+	cMutexLock MutexLockW( &mtxWrite );
 
 	int written = 0;
 
-	cMutexLock( mtxClear );
+	cMutexLock MutexLockC( &mtxClear );
 	int free = rb.Free();
 	if (free > count)
 		free = count;
@@ -158,7 +158,7 @@ void DdCiTsSend::Action()
 
 	while (Running()) {
 		if (clear) {
-			cMutexLock( mtxClear );
+			cMutexLock MutexLock( &mtxClear );
 			rb.Clear();
 			// pkgCntW = 0;
 			// pkgCntR = 0;

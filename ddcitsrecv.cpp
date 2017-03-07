@@ -127,7 +127,7 @@ void DdCiTsRecv::Deliver()
 {
 	while (Running()) {
 		if (clear) {
-			cMutexLock( mtxClear );
+			cMutexLock MutexLock( &mtxClear );
 			rb.Clear();
 			// pkgCntW = 0;
 			// pkgCntR = 0;

@@ -34,7 +34,7 @@
 #include <getopt.h>
 #include <string.h>
 
-static const char *VERSION = "0.0.14";
+static const char *VERSION = "0.0.15";
 static const char *DESCRIPTION = "External Digital Devices CI-Adapter";
 
 static const char *DEV_DVB_CI = "ci";

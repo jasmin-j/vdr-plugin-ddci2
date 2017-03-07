@@ -1,6 +1,18 @@
 VDR Plugin 'ddci2' Revision History
 ----------------------------------
 
+2017-03-07 Version 0.0.15
+- Fixed Mutex locking.
+  This has been found by Klaus S. THX!
+
+2017-03-06 Version 0.0.14
+- Unbound CI and Device
+  - The Plugin does no longer automatically assign a CAM to a device. It will
+    be assigned to a device, when VDR needs a CAM.
+  - Added system error text if ciX/cax device open fails.
+  - New version 0.0.14, requires VDR 2.1.7.
+- Added section Pitfallsto README.
+
 2014-04-11 Version 0.0.13
 
 - Remove ddcireadbuf.* to avoid VDR patch.
