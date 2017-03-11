@@ -34,7 +34,7 @@
 #include <getopt.h>
 #include <string.h>
 
-static const char *VERSION = "0.0.15";
+static const char *VERSION = "0.0.16";
 static const char *DESCRIPTION = "External Digital Devices CI-Adapter";
 
 static const char *DEV_DVB_CI = "ci";
@@ -290,7 +290,7 @@ bool PluginDdci::Start()
 
 	if (FindDdCi()) {
 		int adapter, ci, i=0;
-		if (GetDdCi( adapter, ci )) {
+		while (GetDdCi( adapter, ci )) {
 			L_DBG( "Try to open ca%d", adapter );
 			int ca_fd = CiDevOpen( DEV_DVB_CA, adapter, ci, O_RDWR );
 			L_DBG( "Try to open ci%d-w", adapter );
