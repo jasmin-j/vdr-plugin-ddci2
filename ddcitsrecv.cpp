@@ -33,6 +33,7 @@
 #include <vdr/tools.h>
 
 static const int RUN_TMO = 100;   // our sleeping period (ms)
+static const int CNT_REC_DBG_MAX = 100;
 
 //------------------------------------------------------------------------
 
@@ -59,6 +60,7 @@ DdCiTsRecv::DdCiTsRecv( DdCiAdapter &the_adapter, int ci_fdr, cString &devNameCi
 , pkgCntR( 0 )
 , pkgCntW( 0 )
 , clear( false )
+, cntRecDbg( 0 )
 , tsdeliver( *this, devNameCi )
 {
 	LOG_FUNCTION_ENTER;
@@ -66,7 +68,7 @@ DdCiTsRecv::DdCiTsRecv( DdCiAdapter &the_adapter, int ci_fdr, cString &devNameCi
 	// don't use adapter in this function, unless you know what you are doing!
 
 	SetDescription( "DDCI Recv (%s)", *ciDevName );
-	L_DBG( "DdCiTsRecv for %s created", *ciDevName );
+	L_DBG_M( LDM_D, "DdCiTsRecv for %s created", *ciDevName );
 
 	LOG_FUNCTION_EXIT;
 }
@@ -132,6 +134,7 @@ void DdCiTsRecv::Deliver()
 			// pkgCntW = 0;
 			// pkgCntR = 0;
 			clear = false;
+			cntRecDbg = 0;
 		}
 
 		int cnt = 0;
@@ -191,6 +194,10 @@ void DdCiTsRecv::Action()
 					L_ERROR();
 					break;
 				}
+			}
+			if ((r > 0) && (cntRecDbg < CNT_REC_DBG_MAX)) {
+				++cntRecDbg;
+				L_DBG_M( LDM_CRW, "DdCiTsRecv for %s received data from CAM ###", *ciDevName );
 			}
 			pkgCntW += r / TS_SIZE;
 		}

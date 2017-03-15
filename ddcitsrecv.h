@@ -52,6 +52,7 @@ private:
 	int pkgCntR;           //< package read counter
 	int pkgCntW;           //< package write counter
 	bool clear;            //< true, when the buffer shall be cleared
+	int cntRecDbg;         //< counter for data debugging
 	cMutex mtxClear;       //< clearing is not thread save
 	DdCiTsRecvDeliver tsdeliver; //< TS Data deliver thread
 

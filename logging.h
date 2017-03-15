@@ -43,14 +43,16 @@
 # define LOG_FOO_NAME  __FUNCTION__
 #endif
 
-// log levels
-#define LOG_L_ALL  0   /* log always */
-#define LOG_L_ERR  1   /* log only errors */
-#define LOG_L_INF  2   /* log also info's */
-#define LOG_L_DBG  3   /* log also debug info (see also LOG_DBG_M_xxx) */
-
+// configuration default
 #ifndef CNF_LOG_L_DEFAULT
+// Default log-level is Info
 # define CNF_LOG_L_DEFAULT  LOG_L_INF
+#endif
+
+// configuration default
+#ifndef CNF_LDM_DEFAULT
+// Default debug log mask is default
+# define CNF_LDM_DEFAULT  LDM_D
 #endif
 
 
@@ -60,15 +62,30 @@ extern int LogLevel;
 /// global debug logging mask
 extern int LogDbgMask;
 
-// Default loglevel is Info
+/// log levels
+static const int LOG_L_OFF = 0;   /* log nothing */
+static const int LOG_L_ERR = 1;   /* log only errors */
+static const int LOG_L_INF = 2;   /* log also info's */
+static const int LOG_L_DBG = 3;   /* log also debug info (see also LDM_xxx) */
+static const int LOG_L_MAX = LOG_L_DBG;
+
 static const int LL_DEFAULT = CNF_LOG_L_DEFAULT;
+
+
+/// Debug logging masks
+static const int LDM_D   = 0x0001;   /* All what the developer thought should be logged
+                                        in debug default */
+static const int LDM_F   = 0x0002;   /* File access during init */
+static const int LDM_CRW = 0x0400;   /* CAM data read/write access (heavy logging) */
+
+static const int LDM_DEFAULT = CNF_LDM_DEFAULT;
 
 // internal helper macros
 #define M_START  do {
 #define M_END    } while(0)
 #define M_EMPTY  M_START M_END
 
-#define LOG_X(ll, sev, txt, a...) \
+#define LOG_X(ll, sev, txt, a...)  \
 	M_START if (LogLevel >= ll) { syslog_with_tid(sev, txt a); } M_END
 #define L_ERR_X(a...)   LOG_X( LOG_L_ERR, LOG_ERR, "", ##a )
 #define L_FUNC_X(a...)  LOG_X( LOG_L_DBG, LOG_DEBUG, "", ##a )
@@ -77,10 +94,12 @@ static const int LL_DEFAULT = CNF_LOG_L_DEFAULT;
 
 
 // general logging with any printf format
-#define L_ALL(a...)  LOG_X( LOG_L_ALL, LOG_ERR,   "DDCI: ",     ##a )
+// #define L_ALL(a...)  LOG_X( LOG_L_OFF, LOG_ERR,   "DDCI: ",     ##a )
 #define L_ERR(a...)  LOG_X( LOG_L_ERR, LOG_ERR,   "DDCI-Err: ", ##a )
 #define L_INF(a...)  LOG_X( LOG_L_INF, LOG_INFO,  "DDCI-Inf: ", ##a )
 #define L_DBG(a...)  LOG_X( LOG_L_DBG, LOG_DEBUG, "DDCI-Dbg: ", ##a )
+#define L_DBG_M(msk, a...)  \
+	M_START if (LogDbgMask & msk) { L_DBG( a ); } M_END
 
 // Print current function
 #define L_FUNC_NAME()  L_FUNC_STR( "" )

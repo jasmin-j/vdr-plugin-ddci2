@@ -1,6 +1,17 @@
 VDR Plugin 'ddci2' Revision History
 ----------------------------------
 
+2017-03-11 Version 0.2.0
+- Better logging in case of read/write error to CAM.
+- Added "debugmask" option for debug logging control.
+- Added debug logging for CAM data read/write.
+
+2017-03-11 Version 0.0.17
+- Fixed memory leak on exit.
+
+2017-03-11 Version 0.0.16
+- Init all devices.
+
 2017-03-07 Version 0.0.15
 - Fixed Mutex locking.
   This has been found by Klaus S. THX!

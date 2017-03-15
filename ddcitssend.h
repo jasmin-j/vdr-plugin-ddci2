@@ -51,6 +51,7 @@ private:
 	int pkgCntR;           //< package read counter
 	int pkgCntW;           //< package write counter
 	bool clear;            //< true, when the buffer shall be cleared
+	int cntSndDbg;         //< counter for data debugging
 	cMutex mtxClear;       //< clearing is not thread save
 
 	static const int BUF_NUM = 1000;

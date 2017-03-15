@@ -90,8 +90,8 @@ DdCiAdapter::DdCiAdapter( int ca_fd, int ci_fdw, int ci_fdr, cString &devNameCa,
 						L_ERR( "CAM(%s) Currently only ONE CAM slot supported", GetCaDevName() );
 					}
 				}
-				L_DBG( "DdCiAdapter(%s) created: DescrNum: %d, DescrType: %d, SlotNum: %d, , SlotType: %d"
-					 , GetCaDevName(), Caps.descr_num, Caps.descr_type, Caps.slot_num, Caps.slot_type );
+				L_DBG_M( LDM_D, "DdCiAdapter(%s) created: DescrNum: %d, DescrType: %d, SlotNum: %d, , SlotType: %d"
+					   , GetCaDevName(), Caps.descr_num, Caps.descr_type, Caps.slot_num, Caps.slot_type );
 				Start();
 			} else
 				L_ERR( "no CAM slots found on CAM(%s)", GetCaDevName() );
@@ -186,7 +186,7 @@ bool DdCiAdapter::Reset( int Slot )
 	ciSend.ClrBuffer();
 
 	if (ioctl( fd, CA_RESET, 1 << Slot ) != -1)	{
-		L_DBG( "DdCiAdapter(%s) Reset slot %d on device %d", *caDevName, Slot, GetDeviceNumber() );
+		L_DBG_M( LDM_D, "DdCiAdapter(%s) Reset slot %d on device %d", *caDevName, Slot, GetDeviceNumber() );
 		return true;
 	}
 	else
@@ -223,9 +223,9 @@ bool DdCiAdapter::Assign( cDevice *Device, bool Query )
 
 	if (!Query && ret) {  // is it an allowed de/assignment?
 		if (Device)
-			L_DBG( "DdCiAdapter(%s) assigned to device %d", *caDevName, GetDeviceNumber(Device) );
+			L_DBG_M( LDM_D, "DdCiAdapter(%s) assigned to device %d", *caDevName, GetDeviceNumber(Device) );
 		else if (device)
-			L_DBG( "DdCiAdapter(%s) unassigned from device %d", *caDevName, GetDeviceNumber() );
+			L_DBG_M( LDM_D, "DdCiAdapter(%s) unassigned from device %d", *caDevName, GetDeviceNumber() );
 		device = Device;
 	}
 

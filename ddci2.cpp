@@ -34,12 +34,14 @@
 #include <getopt.h>
 #include <string.h>
 
-static const char *VERSION = "0.0.17";
+static const char *VERSION = "0.2.0";
 static const char *DESCRIPTION = "External Digital Devices CI-Adapter";
 
 static const char *DEV_DVB_CI = "ci";
 
 int LogLevel;
+int LogDbgMask;
+
 
 /**
  * This class implements the interface to the CAM device.
@@ -162,7 +164,7 @@ bool PluginDdci::FindDdCi()
 								break;
 
 							cString fname( CiDevName( DEV_DVB_CI, adapter, ci ) );
-							L_DBG( "found DD CI adapter '%s'", *fname );
+							L_DBG_M( LDM_D, "found DD CI adapter '%s'", *fname );
 
 							dd_ci_names.Append( strdup( cString::sprintf( "%2d %2d", adapter, ci ) ) );
 						}
@@ -213,6 +215,7 @@ PluginDdci::PluginDdci()
 
 	memset( adapters, 0x00, sizeof(adapters) );
 	LogLevel = LL_DEFAULT;
+	LogDbgMask = 0;
 
 	LOG_FUNCTION_EXIT;
 }
@@ -246,7 +249,16 @@ const char *PluginDdci::Description()
 
 const char *PluginDdci::CommandLineHelp()
 {
-	return "  -l        --loglevel     0/1/2/3 log nothing/error/info/debug\n";
+	static const char *txt =
+	  "  -l        --loglevel     0/1/2/3 log nothing/error/info/debug\n"
+	  "  -d        --debugmask    Bitmask to enable special debug logging\n"
+	  "                           0x0001 ... all what the developer thought\n"
+	  "                                      should be logged in debug default\n"
+	  "                           0x0002 ... file access during init\n"
+	  "                           0x0400 ... CAM data read/write access (heavy\n"
+	  "                                      logging)\n";
+
+	return txt;
 }
 
 //------------------------------------------------------------------------
@@ -255,28 +267,43 @@ bool PluginDdci::ProcessArgs( int argc, char *argv[] )
 {
 	static struct option long_options[] = {
 		{ "loglevel", required_argument, NULL, 'l' },
+		{ "debugmask", required_argument, NULL, 'd' },
 		{ NULL, no_argument, NULL, 0 }
 	};
 
-	int c, ll;
-	while ((c = getopt_long( argc, argv, "l:", long_options, NULL )) != -1) {
+	int c, ll, logm;
+
+	while ((c = getopt_long( argc, argv, "d:l:", long_options, NULL )) != -1) {
+		const char * err_txt;
+
 		switch (c) {
+		case 'd':
+			logm = 0;
+			err_txt = "Invalid Debug Mask entered";
+			ll = sscanf( optarg, "0x%4x", &logm );
+			LogDbgMask |= logm;
+			break;
 		case 'l':
-			ll = strtol( optarg, 0, 10 );
-			if ((ll < 0) || (ll > 3)) {
-				#define LSTR "Invalid Loglevel entered"
-				L_ERR( LSTR );
-				fprintf( stderr, LSTR "\n" );
-				#undef LSTR
-				return false;
-			} else {
-				LogLevel = ll;
-			}
+			err_txt = "Invalid Loglevel entered";
+			ll = sscanf( optarg, "%u", &LogLevel );
+			if (LogLevel > LOG_L_MAX)
+				ll = 0;   // to enter error handling
 			break;
 		default:
+			ll = 0;
+			err_txt = "Unknown option found";
+			break;;
+		}
+
+		if ( ll <= 0 ) {
+			fprintf( stderr, "%s\n", err_txt );
 			return false;
 		}
 	}
+
+	if ( ! LogDbgMask )
+		LogDbgMask = LDM_DEFAULT;
+
 	return true;
 }
 
@@ -288,14 +315,16 @@ bool PluginDdci::Start()
 
 	L_INF( "plugin version %s initializing (compiled for VDR version %s)", VERSION, VDRVERSION );
 
+	L_DBG_M( LDM_D, "Debug logging mask 0x%04x", LogDbgMask );
+
 	if (FindDdCi()) {
 		int adapter, ci, i=0;
 		while (GetDdCi( adapter, ci )) {
-			L_DBG( "Try to open ca%d", adapter );
+			L_DBG_M( LDM_F, "Try to open ca%d", adapter );
 			int ca_fd = CiDevOpen( DEV_DVB_CA, adapter, ci, O_RDWR );
-			L_DBG( "Try to open ci%d-w", adapter );
+			L_DBG_M( LDM_F, "Try to open ci%d-w", adapter );
 			int ci_fdw = CiDevOpen( DEV_DVB_CI, adapter, ci, O_WRONLY );
-			L_DBG( "Try to open ci%d-r", adapter );
+			L_DBG_M( LDM_F, "Try to open ci%d-r", adapter );
 			int ci_fdr = CiDevOpen( DEV_DVB_CI, adapter, ci, O_RDONLY | O_NONBLOCK );
 			if ((ca_fd >= 0) && (ci_fdw >= 0) && (ci_fdr >= 0)) {
 				cString fnameCa( CiDevName( DEV_DVB_CA, adapter, ci ) );
@@ -305,7 +334,7 @@ bool PluginDdci::Start()
 
 				adapters[ i++ ] = new DdCiAdapter( ca_fd, ci_fdw, ci_fdr, fnameCa, fnameCi );
 			} else {
-				L_DBG( "Fds -> ca: %d, ciw: %d, cir:%d", ca_fd, ci_fdw, ci_fdr );
+				L_DBG_M( LDM_D, "Fds -> ca: %d, ciw: %d, cir:%d", ca_fd, ci_fdw, ci_fdr );
 				close( ca_fd );
 				close( ci_fdw );
 				close( ci_fdr );

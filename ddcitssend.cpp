@@ -32,6 +32,8 @@
 
 #include <vdr/tools.h>
 
+static const int CNT_SND_DBG_MAX = 100;
+
 //------------------------------------------------------------------------
 
 void DdCiTsSend::CleanUp()
@@ -57,13 +59,14 @@ DdCiTsSend::DdCiTsSend( DdCiAdapter &the_adapter, int ci_fdw, cString &devNameCi
 , pkgCntR( 0 )
 , pkgCntW( 0 )
 , clear( false )
+, cntSndDbg( 0 )
 {
 	LOG_FUNCTION_ENTER;
 
 	// don't use adapter in this function,, unless you know what you are doing!
 
 	SetDescription( "DDCI Send (%s)", *ciDevName );
-	L_DBG( "DdCiTsSend for %s created", *ciDevName );
+	L_DBG_M( LDM_D, "DdCiTsSend for %s created", *ciDevName );
 
 	LOG_FUNCTION_EXIT;
 }
@@ -163,6 +166,7 @@ void DdCiTsSend::Action()
 			// pkgCntW = 0;
 			// pkgCntR = 0;
 			clear = false;
+			cntSndDbg = 0;
 		}
 
 		int cnt = 0;
@@ -185,7 +189,10 @@ void DdCiTsSend::Action()
 						L_ERR_LINE( "couldn't write all data to CAM %s", *ciDevName );
 						len -= remain;
 					}
-
+					if (cntSndDbg < CNT_SND_DBG_MAX) {
+						++cntSndDbg;
+						L_DBG_M( LDM_CRW, "DdCiTsSend for %s wrote data to CAM ###", *ciDevName );
+					}
 				} else {
 					L_ERR_LINE( "couldn't write to CAM %s:%m", *ciDevName );
 					break;

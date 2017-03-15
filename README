@@ -33,9 +33,17 @@ Plugin Commandline
 
 Use vdr -h to see the command line arguments supported by the plugin.
 
-  -l        --loglevel   0/1/2/3 log nothing/error/info/debug
+  -l        --loglevel     0/1/2/3 log nothing/error/info/debug
+  -d        --debugmask    Bitmask to enable special debug logging
+                           0x0001 ... all what the developer thought
+                                      should be logged in debug default
+                           0x0002 ... file access during init
+                           0x0400 ... CAM data read/write access (heavy
+                                      logging)
 
-The default loglevel is info.  
+The default loglevel is info.
+The default debug logging mask is 0x0001. You can use option -d several
+times. All the values are ORed to one mask. Don't forget the "0x"!
 
 
 Pitfalls
