@@ -162,7 +162,7 @@ int DdCiAdapter::Read( uint8_t *Buffer, int MaxLength )
 			int n = safe_read( fd, Buffer, MaxLength );
 			if (n >= 0)
 				return n;
-			L_ERR( "can't read from CI adapter on device %d: %m", GetDeviceNumber() );
+			L_ERR( "can't read from CI adapter (%s) on device %d: %m", *caDevName, GetDeviceNumber() );
 		}
 	}
 	return 0;
@@ -174,7 +174,7 @@ void DdCiAdapter::Write( const uint8_t *Buffer, int Length )
 {
 	if (Buffer && Length > 0) {
 		if (safe_write( fd, Buffer, Length ) != Length)
-			L_ERR( "can't write to CI adapter on device %d: %m", GetDeviceNumber() );
+			L_ERR( "can't write to CI adapter (%s) on device %d: %m", *caDevName, GetDeviceNumber() );
 	}
 }
 
@@ -185,8 +185,10 @@ bool DdCiAdapter::Reset( int Slot )
 	ciRecv.ClrBuffer();
 	ciSend.ClrBuffer();
 
-	if (ioctl( fd, CA_RESET, 1 << Slot ) != -1)
+	if (ioctl( fd, CA_RESET, 1 << Slot ) != -1)	{
+		L_DBG( "DdCiAdapter(%s) Reset slot %d on device %d", *caDevName, Slot, GetDeviceNumber() );
 		return true;
+	}
 	else
 		L_ERR( "can't reset CAM slot %d on device %d: %m", Slot, GetDeviceNumber() );
 	return false;
