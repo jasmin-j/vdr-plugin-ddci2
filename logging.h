@@ -30,11 +30,11 @@
 
 // configuration defaults
 #ifndef CNF_LOG_FUNCTIONS
-# define CNF_LOG_FUNCTIONS 0
+# define CNF_LOG_FUNCTIONS  0
 #endif
 
 #ifndef CNF_LOG_FUNC_PRETTY
-# define CNF_LOG_FUNC_PRETTY 1
+# define CNF_LOG_FUNC_PRETTY  1
 #endif
 
 #if CNF_LOG_FUNC_PRETTY
@@ -43,11 +43,25 @@
 # define LOG_FOO_NAME  __FUNCTION__
 #endif
 
+// log levels
+#define LOG_L_ALL  0   /* log always */
+#define LOG_L_ERR  1   /* log only errors */
+#define LOG_L_INF  2   /* log also info's */
+#define LOG_L_DBG  3   /* log also debug info (see also LOG_DBG_M_xxx) */
+
+#ifndef CNF_LOG_L_DEFAULT
+# define CNF_LOG_L_DEFAULT  LOG_L_INF
+#endif
+
+
 /// global loglevel variable
 extern int LogLevel;
 
+/// global debug logging mask
+extern int LogDbgMask;
+
 // Default loglevel is Info
-static const int LL_DEFAULT = 2;
+static const int LL_DEFAULT = CNF_LOG_L_DEFAULT;
 
 // internal helper macros
 #define M_START  do {
@@ -56,17 +70,17 @@ static const int LL_DEFAULT = 2;
 
 #define LOG_X(ll, sev, txt, a...) \
 	M_START if (LogLevel >= ll) { syslog_with_tid(sev, txt a); } M_END
-#define L_ERR_X(a...)   LOG_X( 1, LOG_ERR, "", ##a )
-#define L_FUNC_X(a...)  LOG_X( 3, LOG_DEBUG, "", ##a )
+#define L_ERR_X(a...)   LOG_X( LOG_L_ERR, LOG_ERR, "", ##a )
+#define L_FUNC_X(a...)  LOG_X( LOG_L_DBG, LOG_DEBUG, "", ##a )
 #define L_FUNC_STR(s)           L_FUNC_X( "DDCI-Dbg (%s) %s", LOG_FOO_NAME, s )
 #define L_FUNC_PRINTF(f, a...)  L_FUNC_X( "DDCI-Dbg (%s)" f, LOG_FOO_NAME, ##a )
 
 
 // general logging with any printf format
-#define L_ALL(a...)  LOG_X( 0, LOG_ERR,   "DDCI: ",     ##a )
-#define L_ERR(a...)  LOG_X( 1, LOG_ERR,   "DDCI-Err: ", ##a )
-#define L_INF(a...)  LOG_X( 2, LOG_INFO,  "DDCI-Inf: ", ##a )
-#define L_DBG(a...)  LOG_X( 3, LOG_DEBUG, "DDCI-Dbg: ", ##a )
+#define L_ALL(a...)  LOG_X( LOG_L_ALL, LOG_ERR,   "DDCI: ",     ##a )
+#define L_ERR(a...)  LOG_X( LOG_L_ERR, LOG_ERR,   "DDCI-Err: ", ##a )
+#define L_INF(a...)  LOG_X( LOG_L_INF, LOG_INFO,  "DDCI-Inf: ", ##a )
+#define L_DBG(a...)  LOG_X( LOG_L_DBG, LOG_DEBUG, "DDCI-Dbg: ", ##a )
 
 // Print current function
 #define L_FUNC_NAME()  L_FUNC_STR( "" )
