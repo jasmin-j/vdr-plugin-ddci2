@@ -214,10 +214,10 @@ eModuleStatus DdCiAdapter::ModuleStatus( int Slot )
 
 bool DdCiAdapter::Assign( cDevice *Device, bool Query )
 {
-	// Currently no MTD, so we can need to check only one device
 
 	bool ret = true;
-
+// TODO: should completely get rid of any references to a "device" (makes no sense here)!
+/*
 	if (Device && device)  // want to assign and there is already an assignment?
 		ret = (Device == device);  // needs to be the same device
 
@@ -228,6 +228,6 @@ bool DdCiAdapter::Assign( cDevice *Device, bool Query )
 			L_DBG_M( LDM_D, "DdCiAdapter(%s) unassigned from device %d", *caDevName, GetDeviceNumber() );
 		device = Device;
 	}
-
+*/
 	return ret;
 }

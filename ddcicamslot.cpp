@@ -38,7 +38,6 @@ void DdCiCamSlot::StopIt()
 	rBuffer.Clear();
 	delivered = false;
 
-	// FIXME: need to be removed for MTD
 	ciSend.ClrBuffer();
 }
 
@@ -51,6 +50,7 @@ DdCiCamSlot::DdCiCamSlot( DdCiAdapter &adapter, DdCiTsSend &sendCi )
 , active( false )
 {
 	LOG_FUNCTION_ENTER;
+	MtdEnable();
 	LOG_FUNCTION_EXIT;
 }
 
@@ -59,6 +59,7 @@ DdCiCamSlot::DdCiCamSlot( DdCiAdapter &adapter, DdCiTsSend &sendCi )
 DdCiCamSlot::~DdCiCamSlot()
 {
 	LOG_FUNCTION_ENTER;
+	StopIt();
 	LOG_FUNCTION_EXIT;
 }
 
@@ -87,9 +88,9 @@ void DdCiCamSlot::StartDecrypting()
 
 	L_FUNC_NAME();
 
-	StopIt();
 	active = true;
-	cCamSlot::StartDecrypting();
+	if (!MtdActive())
+		cCamSlot::StartDecrypting();
 
 	LOG_FUNCTION_EXIT;
 }
@@ -114,7 +115,7 @@ uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 {
 	if (!active) {
 		L_ERR_LINE( "Decrypt in deactivated state ?!?" );
-		Count = 0;
+		Count -= Count % TS_SIZE; // must consume the data to avoid overflow
 		return 0;
 	}
 
@@ -130,6 +131,16 @@ uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 	int cnt = TS_SIZE;
 	int stored = ciSend.Write( Data, cnt );
 	Count = stored;
+
+	/*
+	 * MTD
+	 *
+	 * With MTD support active, decrypted TS packets are sent to the individual
+	 * MTD CAM slots in DataRecv().
+	 */
+
+	if (MtdActive())
+		return NULL;
 
 	/*
 	 * READ
@@ -166,14 +177,17 @@ int DdCiCamSlot::DataRecv( uchar *data )
 
 	int written = -1;     // default, try again
 
-	int free = rBuffer.Free();
-	if (free >= TS_SIZE) {
-		free = TS_SIZE;
-		written = rBuffer.Put( data, free );
-		if (written != free)
-			L_ERR_LINE( "Couldn't write previously checked free data ?!?" );
-		written = 0;
+	if (MtdActive()) {
+		written = MtdPutData(data, TS_SIZE);
+	} else {
+		int free = rBuffer.Free();
+		if (free >= TS_SIZE) {
+			free = TS_SIZE;
+			written = rBuffer.Put( data, free );
+			if (written != free)
+				L_ERR_LINE( "Couldn't write previously checked free data ?!?" );
+			written = 0;
+		}
 	}
-
 	return written;
 }

@@ -38,7 +38,7 @@ class DdCiAdapter;
 /**
  * This class implements the physical interface to the CAM TS device.
  * It implements a send buffer and a sender thread to write the TS data
- * independent and with big junks.
+ * independent and with big chunks.
  */
 class DdCiTsSend: public cThread
 {

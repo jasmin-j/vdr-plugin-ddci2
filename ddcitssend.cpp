@@ -125,10 +125,6 @@ void DdCiTsSend::ClrBuffer()
 
 int DdCiTsSend::Write( const uchar *data, int count )
 {
-	/* The lock is currently not necessary, because there can be only one
-	 * device attached to a CAM. But we implement the lock now, to be prepared
-	 * for the future.
-	 */
 	cMutexLock MutexLockW( &mtxWrite );
 
 	int written = 0;
