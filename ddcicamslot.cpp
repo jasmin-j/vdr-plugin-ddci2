@@ -28,7 +28,14 @@
 #include "ddcicamslot.h"
 #include "ddciadapter.h"
 #include "ddcitssend.h"
+#include "ddci2.h"
 #include "logging.h"
+
+#include <vdr/remux.h>
+
+static const int SCT_DBG_TMO = 2000;   // 2 seconds
+static const int CNT_SCT_DBG_MAX = 20;
+
 
 //------------------------------------------------------------------------
 
@@ -37,6 +44,10 @@ void DdCiCamSlot::StopIt()
 	active = false;
 	rBuffer.Clear();
 	delivered = false;
+	cntSctPkt = 0;
+	cntSctClrPkt = 0;
+	cntSctDbg = 0;
+	timSctDbg.Set(SCT_DBG_TMO);
 
 	ciSend.ClrBuffer();
 }
@@ -48,6 +59,9 @@ DdCiCamSlot::DdCiCamSlot( DdCiAdapter &adapter, DdCiTsSend &sendCi )
 , ciSend( sendCi )
 , delivered( false )
 , active( false )
+, cntSctPkt( 0 )
+, cntSctClrPkt( 0 )
+, cntSctDbg( 0 )
 {
 	LOG_FUNCTION_ENTER;
 	MtdEnable();
@@ -161,8 +175,28 @@ uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 	if (!data || (cnt < TS_SIZE)) {
 		data = 0;
 	}
-	else
+	else {
+		if (TsIsScrambled( data )) {
+			++cntSctPkt;
+
+			// remove the scrambling bit?
+			if (CfgIsClrSct()) {
+				data[3] &= ~TS_SCRAMBLING_CONTROL;
+				++cntSctClrPkt;
+			}
+		}
+
+		if ((cntSctPkt) && (cntSctDbg < CNT_SCT_DBG_MAX) && timSctDbg.TimedOut()) {
+			++cntSctDbg;
+			L_DBG_M( LDM_SCT, "DdCiCamSlot for %s got %d scrambled packets from CAM"
+				   , ciSend.GetCiDevName(), cntSctPkt );
+			L_DBG_M( LDM_SCT, "DdCiCamSlot for %s clr %d scrambling control bits"
+				   , ciSend.GetCiDevName(), cntSctClrPkt );
+			timSctDbg.Set(SCT_DBG_TMO);
+		}
+
 		delivered = true;
+	}
 
 	return data;
 }
