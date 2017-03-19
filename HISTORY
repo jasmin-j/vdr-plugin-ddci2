@@ -1,6 +1,13 @@
 VDR Plugin 'ddci2' Revision History
 ----------------------------------
 
+2017-03-19 Version 0.2.1
+- Added scrambling bit modification
+- New option '-c' / "--clrsct" to activate clearing the scambling control bit
+  before the packet is send to VDR. Might be useful for some stupid CAMs.
+- New debug mask "0x0800" for scrambling control debug printing
+- Remove packets when not decrypting.
+
 2017-03-11 Version 0.2.0
 - Better logging in case of read/write error to CAM.
 - Added "debugmask" option for debug logging control.
