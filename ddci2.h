@@ -29,6 +29,14 @@
 #ifndef __DDCI2_H
 #define __DDCI2_H
 
+
+#if (VDRVERSNUM >= 20303)
+# define DDCI_MTD  1
+#else
+# define DDCI_MTD  0
+#endif
+
+
 // global config options
 extern int cfgClrSct;
 

@@ -1,6 +1,9 @@
 VDR Plugin 'ddci2' Revision History
 ----------------------------------
 
+2017-03-20 Version 1.0.0
+- Added MTD supoort. Requires VDR 2.3.3.
+
 2017-03-19 Version 0.2.1
 - Added scrambling bit modification
 - New option '-c' / "--clrsct" to activate clearing the scambling control bit

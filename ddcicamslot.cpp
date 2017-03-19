@@ -64,7 +64,11 @@ DdCiCamSlot::DdCiCamSlot( DdCiAdapter &adapter, DdCiTsSend &sendCi )
 , cntSctDbg( 0 )
 {
 	LOG_FUNCTION_ENTER;
+
+#if DDCI_MTD
 	MtdEnable();
+#endif
+
 	LOG_FUNCTION_EXIT;
 }
 
@@ -103,7 +107,10 @@ void DdCiCamSlot::StartDecrypting()
 	L_FUNC_NAME();
 
 	active = true;
+
+#if DDCI_MTD
 	if (!MtdActive())
+#endif
 		cCamSlot::StartDecrypting();
 
 	LOG_FUNCTION_EXIT;
@@ -148,6 +155,7 @@ uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 	int stored = ciSend.Write( Data, cnt );
 	Count = stored;
 
+#if DDCI_MTD
 	/*
 	 * MTD
 	 *
@@ -157,6 +165,7 @@ uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 
 	if (MtdActive())
 		return NULL;
+#endif
 
 	/*
 	 * READ
@@ -213,9 +222,12 @@ int DdCiCamSlot::DataRecv( uchar *data )
 
 	int written = -1;     // default, try again
 
+#if DDCI_MTD
 	if (MtdActive()) {
 		written = MtdPutData(data, TS_SIZE);
-	} else {
+	} else
+#endif
+	{
 		int free = rBuffer.Free();
 		if (free >= TS_SIZE) {
 			free = TS_SIZE;
