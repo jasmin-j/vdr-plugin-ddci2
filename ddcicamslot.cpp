@@ -129,7 +129,9 @@ uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 {
 	if (!active) {
 		L_ERR_LINE( "Decrypt in deactivated state ?!?" );
-		Count -= Count % TS_SIZE; // must consume the data to avoid overflow
+
+		// must consume the data to avoid overflow
+		Count -= (Count / TS_SIZE) * TS_SIZE;
 		return 0;
 	}
 
