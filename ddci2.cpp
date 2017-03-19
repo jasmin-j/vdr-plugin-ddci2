@@ -25,6 +25,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////
 
+#include "ddci2.h"
 #include "ddciadapter.h"
 #include "logging.h"
 
@@ -34,13 +35,14 @@
 #include <getopt.h>
 #include <string.h>
 
-static const char *VERSION = "0.2.0";
+static const char *VERSION = "0.2.1";
 static const char *DESCRIPTION = "External Digital Devices CI-Adapter";
 
 static const char *DEV_DVB_CI = "ci";
 
 int LogLevel;
 int LogDbgMask;
+int cfgClrSct;
 
 
 /**
@@ -216,6 +218,7 @@ PluginDdci::PluginDdci()
 	memset( adapters, 0x00, sizeof(adapters) );
 	LogLevel = LL_DEFAULT;
 	LogDbgMask = 0;
+	cfgClrSct = 0;
 
 	LOG_FUNCTION_EXIT;
 }
@@ -250,13 +253,17 @@ const char *PluginDdci::Description()
 const char *PluginDdci::CommandLineHelp()
 {
 	static const char *txt =
+	  "  -c        --clrsct       clear the scambling control bit before the"
+	  "                           packet is send to VDR\n"
 	  "  -l        --loglevel     0/1/2/3 log nothing/error/info/debug\n"
 	  "  -d        --debugmask    Bitmask to enable special debug logging\n"
 	  "                           0x0001 ... all what the developer thought\n"
 	  "                                      should be logged in debug default\n"
 	  "                           0x0002 ... file access during init\n"
 	  "                           0x0400 ... CAM data read/write access (heavy\n"
-	  "                                      logging)\n";
+	  "                                      logging)\n"
+	  "                           0x0800 ... Scrambling control\n"
+	  ;
 
 	return txt;
 }
@@ -266,6 +273,7 @@ const char *PluginDdci::CommandLineHelp()
 bool PluginDdci::ProcessArgs( int argc, char *argv[] )
 {
 	static struct option long_options[] = {
+		{ "clrsct", no_argument, NULL, 'c' },
 		{ "loglevel", required_argument, NULL, 'l' },
 		{ "debugmask", required_argument, NULL, 'd' },
 		{ NULL, no_argument, NULL, 0 }
@@ -273,10 +281,14 @@ bool PluginDdci::ProcessArgs( int argc, char *argv[] )
 
 	int c, ll, logm;
 
-	while ((c = getopt_long( argc, argv, "d:l:", long_options, NULL )) != -1) {
+	while ((c = getopt_long( argc, argv, "cd:l:", long_options, NULL )) != -1) {
 		const char * err_txt;
 
 		switch (c) {
+		case 'c':
+			cfgClrSct = 1;
+			ll = 1; // no error
+			break;
 		case 'd':
 			logm = 0;
 			err_txt = "Invalid Debug Mask entered";
@@ -316,6 +328,9 @@ bool PluginDdci::Start()
 	L_INF( "plugin version %s initializing (compiled for VDR version %s)", VERSION, VDRVERSION );
 
 	L_DBG_M( LDM_D, "Debug logging mask 0x%04x", LogDbgMask );
+
+	if (CfgIsClrSct())
+		L_INF( "Clear scambling control bit activated" );
 
 	if (FindDdCi()) {
 		int adapter, ci, i=0;

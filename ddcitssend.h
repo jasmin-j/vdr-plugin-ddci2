@@ -79,6 +79,7 @@ public:
 	void Cancel( int waitSec = 0 );
 
 	void ClrBuffer();
+	const char *GetCiDevName() { return *ciDevName; } ;
 
 	/**
 	 * Write as most of the given data to the send buffer.
