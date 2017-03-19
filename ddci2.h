@@ -29,6 +29,7 @@
 #ifndef __DDCI2_H
 #define __DDCI2_H
 
+#include <vdr/config.h>
 
 #if (VDRVERSNUM >= 20303)
 # define DDCI_MTD  1
