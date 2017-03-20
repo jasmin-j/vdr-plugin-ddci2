@@ -77,7 +77,10 @@ DdCiCamSlot::DdCiCamSlot( DdCiAdapter &adapter, DdCiTsSend &sendCi )
 DdCiCamSlot::~DdCiCamSlot()
 {
 	LOG_FUNCTION_ENTER;
+
+	cMutexLock MutexLock(&mtxRun);
 	StopIt();
+
 	LOG_FUNCTION_EXIT;
 }
 
@@ -88,6 +91,8 @@ bool DdCiCamSlot::Reset()
 	LOG_FUNCTION_ENTER;
 
 	L_FUNC_NAME();
+
+	cMutexLock MutexLock(&mtxRun);
 
 	bool ret = cCamSlot::Reset();
 	if (ret)
@@ -105,6 +110,8 @@ void DdCiCamSlot::StartDecrypting()
 	LOG_FUNCTION_ENTER;
 
 	L_FUNC_NAME();
+
+	cMutexLock MutexLock(&mtxRun);
 
 	active = true;
 
@@ -124,6 +131,8 @@ void DdCiCamSlot::StopDecrypting()
 
 	L_FUNC_NAME();
 
+	cMutexLock MutexLock(&mtxRun);
+
 	cCamSlot::StopDecrypting();
 	StopIt();
 
@@ -134,6 +143,10 @@ void DdCiCamSlot::StopDecrypting()
 
 uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 {
+	/* Normally we would need to lock mtxRun. But because we only write the
+	 * packet into send buffer or ignore them during the state change, it is
+	 * not worth to lock here.
+	 */
 	if (!active) {
 		L_ERR_LINE( "Decrypt in deactivated state ?!?" );
 
@@ -146,6 +159,7 @@ uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 	 *  WRITE
 	 */
 
+	// FIXME: Test this again, should work now fixes in Kernel!
 	/* It would be possible to store more of the given data, but this did
 	 * not work during my tests. So we need to write frame by frame to the
 	 * send buffer.
@@ -214,6 +228,7 @@ uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 
 //------------------------------------------------------------------------
 
+// FIXME: call this function with more packets and write more in case of MTD
 int DdCiCamSlot::DataRecv( uchar *data )
 {
 	if (!active) {

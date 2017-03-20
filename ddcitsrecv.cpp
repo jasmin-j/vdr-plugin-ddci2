@@ -129,6 +129,7 @@ void DdCiTsRecv::Deliver()
 {
 	while (Running()) {
 		if (clear) {
+			// FIXME: Check Mutex
 			cMutexLock MutexLock( &mtxClear );
 			rb.Clear();
 			// pkgCntW = 0;
@@ -153,6 +154,7 @@ void DdCiTsRecv::Deliver()
 		if (cnt < TS_SIZE)
 			continue;
 
+		// FIXME: send whole buffer
 		if (adapter.DataRecv( frame ) != -1) {
 			rb.Del( TS_SIZE );
 			++pkgCntR;
