@@ -41,6 +41,7 @@ class DdCiTsSend;
  */
 class DdCiCamSlot: public cCamSlot
 {
+	cMutex mtxRun;        //< the synchronization mutex for Start/StopDecrypting
 	DdCiTsSend &ciSend;   //< the CAM TS sender
 	DdCiRecvBuf rBuffer;  //< the receive buffer
 	bool delivered;       //< true, if Decrypt did deliver data at last call
