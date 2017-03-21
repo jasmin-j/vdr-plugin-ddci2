@@ -61,6 +61,7 @@ DdCiCamSlot::DdCiCamSlot( DdCiAdapter &adapter, DdCiTsSend &sendCi )
 , delivered( false )
 , active( false )
 , cntSctPkt( 0 )
+, cntSctPktL( 0 )
 , cntSctClrPkt( 0 )
 , cntSctDbg( 0 )
 {
@@ -191,7 +192,8 @@ uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 			}
 		}
 
-		if ((cntSctPkt) && (cntSctDbg < CNT_SCT_DBG_MAX) && timSctDbg.TimedOut()) {
+		if ((cntSctPkt != cntSctPktL) && (cntSctDbg < CNT_SCT_DBG_MAX) && timSctDbg.TimedOut()) {
+			cntSctPktL = cntSctPkt;
 			++cntSctDbg;
 			L_DBG_M( LDM_SCT, "DdCiCamSlot for %s got %d scrambled packets from CAM"
 				   , ciSend.GetCiDevName(), cntSctPkt );
