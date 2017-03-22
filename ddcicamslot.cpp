@@ -110,7 +110,6 @@ void DdCiCamSlot::StartDecrypting()
 
 	cMutexLock MutexLock(&mtxRun);
 
-	StopIt();
 	active = true;
 	cCamSlot::StartDecrypting();
 

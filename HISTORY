@@ -1,6 +1,10 @@
 VDR Plugin 'ddci2' Revision History
 ----------------------------------
 
+2017-03-19 Version 0.2.2
+- Lock Reset and Start/StopDecrypt.
+- Print scrambling control statistic only if it has changed.
+
 2017-03-19 Version 0.2.1
 - Added scrambling bit modification
 - New option '-c' / "--clrsct" to activate clearing the scambling control bit
