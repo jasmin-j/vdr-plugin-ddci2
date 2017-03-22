@@ -42,9 +42,6 @@ class DdCiCamSlot;
 class DdCiAdapter: public cCiAdapter
 {
 private:
-	/* VDR currently allows only *one* device per CI adapter.
-	 */
-	cDevice *device;    //< the bound device
 	int fd;             //< .../frontendX/caX device file handle
 	cString caDevName;  //< .../frontendX/caX device path
 	DdCiTsSend ciSend;  //< the CAM TS sender
@@ -55,8 +52,6 @@ private:
 
 	void CleanUp();
 	const char *GetCaDevName() { return caDevName; };
-	// Get device number from given device or the bound device
-	int GetDeviceNumber( cDevice *Device = NULL );
 
 protected:
 	/* see file ci.h in the VDR include directory for the description of
