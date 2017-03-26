@@ -176,7 +176,7 @@ void DdCiTsSend::Action()
 			}
 
 			int len = cnt - skipped;
-			len -= (len % TS_SIZE);
+			len -= (len % TS_SIZE);     // only whole TS frames must be written
 			if (len >= TS_SIZE) {
 				int w = WriteAllOrNothing( fd, frame, len, 5 * RUN_CHECK_TMO, RUN_CHECK_TMO );
 				if (w >= 0) {

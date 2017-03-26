@@ -155,6 +155,9 @@ void DdCiTsRecv::Deliver()
 		if (cnt < TS_SIZE)
 			continue;
 
+		/* write only whole packets, because CheckTsSync will fail in next round otherwise */
+		cnt -= cnt % TS_SIZE;
+
 		int written = adapter.DataRecv( frame, cnt );
 		if (written != 0) {
 			rb.Del( written );
@@ -162,9 +165,7 @@ void DdCiTsRecv::Deliver()
 			pkgCntR += written / TS_SIZE;
 		} else {
 			if (retry++ < 3) {
-				/* The receive buffer of the adapter is full, so we need to wait
-				 * a little bit.
-				 */
+				/* The receive buffer of the adapter is full, so we need to wait a little bit. */
 				cCondWait::SleepMs( RUN_TMO );
 			} else {
 				L_ERR( "Can't write packet VDR CamSlot for CI adapter (%s)", adapter.GetCaDevName() );
