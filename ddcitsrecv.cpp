@@ -129,8 +129,7 @@ void DdCiTsRecv::Deliver()
 {
 	while (Running()) {
 		if (clear) {
-			// FIXME: Check Mutex
-			cMutexLock MutexLock( &mtxClear );
+			DDCI_RB_CLR_MTX_LOCK( &mtxClear )
 			rb.Clear();
 			// pkgCntW = 0;
 			// pkgCntR = 0;
@@ -186,9 +185,8 @@ void DdCiTsRecv::Action()
 	while (Running()) {
 		if (Poller.Poll( RUN_TMO )) {
 			errno = 0;
-			mtxClear.Lock();
+			DDCI_RB_CLR_MTX_LOCK( &mtxClear )
 			int r = rb.Read( fd );
-			mtxClear.Unlock();
 			if ((r < 0) && FATALERRNO) {
 				if (errno == EOVERFLOW)
 					L_ERR_LINE( "Driver buffer overflow on file %s:%m", *ciDevName );

@@ -32,9 +32,13 @@
 #include <vdr/config.h>
 
 #if (VDRVERSNUM >= 20303)
-# define DDCI_MTD  1
+# define DDCI_MTD         1   // MTD enabled
+# define DDCI_RB_CLR_MTX  1   /* cRingBufferLinear::Clear is thread save, when
+                               * executed from reader thread */
 #else
-# define DDCI_MTD  0
+# define DDCI_MTD         0   // no MTD older versions
+# define DDCI_RB_CLR_MTX  1   /* cRingBufferLinear::Clear is not thread save and
+                               * we need a mutex */
 #endif
 
 
@@ -45,5 +49,14 @@ inline bool CfgIsClrSct()
 {
   return cfgClrSct != 0;
 }
+
+
+#if DDCI_RB_CLR_MTX
+
+#define DDCI_RB_CLR_MTX_DECL(_m)  cMutex _m;
+#define DDCI_RB_CLR_MTX_LOCK(_m)  cMutexLock MutexLock( _m );
+
+#endif // DDCI_RB_CLR_MTX
+
 
 #endif // __DDCI2_H

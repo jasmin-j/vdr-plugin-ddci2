@@ -28,6 +28,8 @@
 #ifndef __DDCITSSEND_H
 #define __DDCITSSEND_H
 
+#include "ddci2.h"
+
 #include <vdr/thread.h>
 #include <vdr/ringbuffer.h>
 #include <vdr/remux.h>   // TS_SIZE, TS_SYNC_BYTE
@@ -52,7 +54,7 @@ private:
 	int pkgCntW;           //< package write counter
 	bool clear;            //< true, when the buffer shall be cleared
 	int cntSndDbg;         //< counter for data debugging
-	cMutex mtxClear;       //< clearing is not thread save
+	DDCI_RB_CLR_MTX_DECL(mtxClear)
 
 	static const int BUF_NUM = 1000;
 	static const int BUF_MARGIN = TS_SIZE;

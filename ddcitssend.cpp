@@ -129,7 +129,7 @@ int DdCiTsSend::Write( const uchar *data, int count )
 
 	int written = 0;
 
-	cMutexLock MutexLockC( &mtxClear );
+	DDCI_RB_CLR_MTX_LOCK( &mtxClear )
 	int free = rb.Free();
 	if (free > count)
 		free = count;
@@ -157,7 +157,7 @@ void DdCiTsSend::Action()
 
 	while (Running()) {
 		if (clear) {
-			cMutexLock MutexLock( &mtxClear );
+			DDCI_RB_CLR_MTX_LOCK( &mtxClear )
 			rb.Clear();
 			// pkgCntW = 0;
 			// pkgCntR = 0;
