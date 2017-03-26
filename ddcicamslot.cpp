@@ -230,29 +230,31 @@ uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 
 //------------------------------------------------------------------------
 
-// FIXME: call this function with more packets and write more in case of MTD
-int DdCiCamSlot::DataRecv( uchar *data )
+int DdCiCamSlot::DataRecv( uchar *data, int count )
 {
 	if (!active) {
 		return 0;
 	}
 
-	int written = -1;     // default, try again
+	int written;
 
 #if DDCI_MTD
 	if (MtdActive()) {
-		written = MtdPutData(data, TS_SIZE);
+		written = MtdPutData(data, count);
 	} else
 #endif
 	{
 		int free = rBuffer.Free();
+		free -= free % TS_SIZE;   // write only whole packets
 		if (free >= TS_SIZE) {
-			free = TS_SIZE;
-			written = rBuffer.Put( data, free );
-			if (written != free)
+			if (free < count)
+				count = free;
+			written = rBuffer.Put( data, count );
+			if (written != count)
 				L_ERR_LINE( "Couldn't write previously checked free data ?!?" );
-			written = 0;
 		}
+		else
+			written = 0;
 	}
 	return written;
 }

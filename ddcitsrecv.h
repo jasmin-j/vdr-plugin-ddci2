@@ -53,6 +53,7 @@ private:
 	int pkgCntR;           //< package read counter
 	int pkgCntW;           //< package write counter
 	bool clear;            //< true, when the buffer shall be cleared
+	int retry;             //< number of retries to send a packet
 	int cntRecDbg;         //< counter for data debugging
 	DdCiTsRecvDeliver tsdeliver; //< TS Data deliver thread
 	DDCI_RB_CLR_MTX_DECL(mtxClear)

@@ -51,7 +51,6 @@ private:
 	DdCiCamSlot *camSlot;  //< the one and only slot of a DD CI adapter
 
 	void CleanUp();
-	const char *GetCaDevName() { return caDevName; };
 
 protected:
 	/* see file ci.h in the VDR include directory for the description of
@@ -81,15 +80,15 @@ public:
 	virtual ~DdCiAdapter();
 
 	/**
-	 * Deliver the received CAM TS Data to the receive buffer.
-	 * data is always only one TS data packet of size TS_SIZE and it is
-	 * guaranteed, that the first byte of data is a TS_SYNC_BYTE.
-	 * @param data the received data to
-	 * @return 0 .. data delivered
-	 *        -1 .. receiver buffer full
-	 *        -2 .. no appropriate target found, discard data
+     * Deliver the received CAM TS Data to the receive buffer.
+	 * @param data the received TS packet(s) from the CAM; it have to point to
+	 *        the beginning of a packet (start with TS_SYNC_BYTE).
+	 * @param count the number of bytes in data (shall be at least TS_SIZE).
+	 * @return the number of bytes actually processed
 	 */
-	int DataRecv( uchar *data );
+	int DataRecv( uchar *data, int count );
+
+	const char *GetCaDevName() { return caDevName; };
 };
 
 #endif //__DDCIADAPTER_H

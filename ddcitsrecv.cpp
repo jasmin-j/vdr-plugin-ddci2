@@ -60,6 +60,7 @@ DdCiTsRecv::DdCiTsRecv( DdCiAdapter &the_adapter, int ci_fdr, cString &devNameCi
 , pkgCntR( 0 )
 , pkgCntW( 0 )
 , clear( false )
+, retry( 0 )
 , cntRecDbg( 0 )
 , tsdeliver( *this, devNameCi )
 {
@@ -134,6 +135,7 @@ void DdCiTsRecv::Deliver()
 			// pkgCntW = 0;
 			// pkgCntR = 0;
 			clear = false;
+			retry = 0;
 			cntRecDbg = 0;
 		}
 
@@ -153,15 +155,22 @@ void DdCiTsRecv::Deliver()
 		if (cnt < TS_SIZE)
 			continue;
 
-		// FIXME: send whole buffer
-		if (adapter.DataRecv( frame ) != -1) {
-			rb.Del( TS_SIZE );
-			++pkgCntR;
+		int written = adapter.DataRecv( frame, cnt );
+		if (written != 0) {
+			rb.Del( written );
+			retry = 0;
+			pkgCntR += written / TS_SIZE;
 		} else {
-			/* The receive buffer of the adapter is full, so we need to wait a
-			 * little bit.
-			 */
-			cCondWait::SleepMs( RUN_TMO );
+			if (retry++ < 3) {
+				/* The receive buffer of the adapter is full, so we need to wait
+				 * a little bit.
+				 */
+				cCondWait::SleepMs( RUN_TMO );
+			} else {
+				L_ERR( "Can't write packet VDR CamSlot for CI adapter (%s)", adapter.GetCaDevName() );
+				rb.Del( TS_SIZE );
+				retry = 0;
+			}
 		}
 	}
 }

@@ -105,16 +105,12 @@ DdCiAdapter::~DdCiAdapter()
 
 //------------------------------------------------------------------------
 
-int DdCiAdapter::DataRecv( uchar *data )
+int DdCiAdapter::DataRecv( uchar *data, int count )
 {
-	int ret = 0;
+	if ( !camSlot )
+		return count;   // no slot, eat all the data
 
-	if ( camSlot ) {
-		camSlot->DataRecv( data );
-	} else
-		ret = -2;
-
-	return ret;
+	return camSlot->DataRecv( data, count );
 }
 
 //------------------------------------------------------------------------
