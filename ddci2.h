@@ -32,13 +32,15 @@
 #include <vdr/config.h>
 
 #if (VDRVERSNUM >= 20303)
-# define DDCI_MTD         1   // MTD enabled
-# define DDCI_RB_CLR_MTX  0   /* cRingBufferLinear::Clear is thread save, when
-                               * executed from reader thread */
+# define DDCI_MTD         1    // MTD enabled
+# define DDCI_RB_CLR_MTX  0    /* cRingBufferLinear::Clear is thread save, when
+                                * executed from reader thread */
+# define DDCI_DECRYPT_MORE  1  // Decrypt as much as possible at once
 #else
-# define DDCI_MTD         0   // no MTD older versions
-# define DDCI_RB_CLR_MTX  1   /* cRingBufferLinear::Clear is not thread save and
-                               * we need a mutex */
+# define DDCI_MTD           0  // no MTD in older versions
+# define DDCI_RB_CLR_MTX    1  /* cRingBufferLinear::Clear is not thread save and
+                                * we need a mutex */
+# define DDCI_DECRYPT_MORE  0  // older VDR can't handle more packets
 #endif
 
 

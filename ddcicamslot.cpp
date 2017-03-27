@@ -149,7 +149,11 @@ uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 	 * not worth to lock here.
 	 */
 
+#if DDCI_DECRYPT_MORE
 	Count -= (Count % TS_SIZE);  // we write only whole TS frames
+#else
+	Count = TS_SIZE;
+#endif
 
 	if (!active) {
 		return 0;
