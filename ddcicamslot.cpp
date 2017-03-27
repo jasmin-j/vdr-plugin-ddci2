@@ -145,30 +145,20 @@ void DdCiCamSlot::StopDecrypting()
 uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 {
 	/* Normally we would need to lock mtxRun. But because we only write the
-	 * packet into send buffer or ignore them during the state change, it is
+	 * packet into a send buffer or ignore them during the state change, it is
 	 * not worth to lock here.
 	 */
-	if (!active) {
-		L_ERR_LINE( "Decrypt in deactivated state ?!?" );
 
-		// must consume the data to avoid overflow
-		Count -= (Count / TS_SIZE) * TS_SIZE;
+	Count -= (Count % TS_SIZE);  // we write only whole TS frames
+
+	if (!active) {
 		return 0;
 	}
 
 	/*
 	 *  WRITE
 	 */
-
-	// FIXME: Test this again, should work now fixes in Kernel!
-	/* It would be possible to store more of the given data, but this did
-	 * not work during my tests. So we need to write frame by frame to the
-	 * send buffer.
-	 */
-	// int cnt = Count - (Count % TS_SIZE);  // we write only whole TS frames
-	int cnt = TS_SIZE;
-	int stored = ciSend.Write( Data, cnt );
-	Count = stored;
+	Count = ciSend.Write( Data, Count );
 
 #if DDCI_MTD
 	/*
@@ -179,7 +169,7 @@ uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 	 */
 
 	if (MtdActive())
-		return NULL;
+		return 0;
 #endif
 
 	/*
@@ -196,7 +186,7 @@ uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 		delivered = false;
 	}
 
-	cnt = 0;
+	int cnt = 0;
 	uchar *data = rBuffer.Get( cnt );
 	if (!data || (cnt < TS_SIZE)) {
 		data = 0;
@@ -233,7 +223,7 @@ uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 int DdCiCamSlot::DataRecv( uchar *data, int count )
 {
 	if (!active) {
-		return 0;
+		return count;   // not active, eat all the data
 	}
 
 	int written;

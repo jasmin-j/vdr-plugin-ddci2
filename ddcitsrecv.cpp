@@ -205,11 +205,13 @@ void DdCiTsRecv::Action()
 					break;
 				}
 			}
-			if ((r > 0) && (cntRecDbg < CNT_REC_DBG_MAX)) {
-				++cntRecDbg;
-				L_DBG_M( LDM_CRW, "DdCiTsRecv for %s received data from CAM ###", *ciDevName );
+			if (r > 0) {
+				if (cntRecDbg < CNT_REC_DBG_MAX) {
+					++cntRecDbg;
+					L_DBG_M( LDM_CRW, "DdCiTsRecv for %s received data from CAM ###", *ciDevName );
+				}
+				pkgCntW += r / TS_SIZE;
 			}
-			pkgCntW += r / TS_SIZE;
 		}
 
 		if (t.TimedOut()) {
