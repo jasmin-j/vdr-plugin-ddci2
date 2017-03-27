@@ -1,9 +1,29 @@
 VDR Plugin 'ddci2' Revision History
 ----------------------------------
 
-2017-03-25 Version 1.0.0
-- Added MTD supoort. Requires VDR 2.3.3.
+2017-03-28 Version 1.0.0
+- Added MTD support (Yeah, it is done!).
+  Requires VDR 2.3.3, but does still compile with older VDR versions.
+  A big THANK YOU to Klaus S., who implemented almost all of the MTD
+  code into the VDR and helped to change and debug this plugin.
+- Completely remove device from DdCiAdapter.
 - Print scrambling control statistic only if it has changed.
+- Added Clear Mutex for non VDR 2.3.3 version.
+- Discard a packet after three unsuccessful deliver attempts.
+- Allow compilation without ringbuffer clear mutex (VDR 2.3.3).
+- Write only whole packets to DataRecv.
+- Remove warning when Decryt is executed in deactivated state.
+- Decrypt will now use the whole data to write to the CAM send buffer
+  (VDR 2.3.3).
+- Little fix concerning a debug counter in CAM recv thread.
+- New compile time switch DDCI_DECRYPT_MORE to switch of block decrypting for
+  older VDR version.
+
+2017-03-19 Version 0.2.2
+- Lock Reset and Start/StopDecrypt.
+- Print scrambling control statistic only if it has changed.
+  Maintainer Info:
+  Head was at commit 42822924a2a50a94a4f8709f6d223943c67360c2
 
 2017-03-19 Version 0.2.1
 - Added scrambling bit modification
