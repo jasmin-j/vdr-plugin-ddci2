@@ -115,6 +115,14 @@ int DdCiAdapter::DataRecv( uchar *data, int count )
 
 //------------------------------------------------------------------------
 
+void DdCiAdapter::ClrBuffers()
+{
+	ciSend.ClrBuffer();
+	ciRecv.ClrBuffer();
+}
+
+//------------------------------------------------------------------------
+
 void DdCiAdapter::Action()
 {
 	LOG_FUNCTION_ENTER;
@@ -164,8 +172,7 @@ void DdCiAdapter::Write( const uint8_t *Buffer, int Length )
 
 bool DdCiAdapter::Reset( int Slot )
 {
-	ciRecv.ClrBuffer();
-	ciSend.ClrBuffer();
+	ClrBuffers();
 
 	if (ioctl( fd, CA_RESET, 1 << Slot ) != -1)	{
 		L_DBG_M( LDM_D, "DdCiAdapter(%s) Reset slot %d", *caDevName, Slot );

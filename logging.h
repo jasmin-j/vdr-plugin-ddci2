@@ -78,6 +78,7 @@ static const int LDM_D   = 0x0001;   /* All what the developer thought should be
 static const int LDM_F   = 0x0002;   /* File access during init */
 static const int LDM_CRW = 0x0400;   /* CAM data read/write access (heavy logging) */
 static const int LDM_SCT = 0x0800;   /* Scrambling control */
+static const int LDM_CBS = 0x1000;   /* CAM buffer statistic (quite much logging) */
 
 static const int LDM_DEFAULT = CNF_LDM_DEFAULT;
 

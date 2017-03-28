@@ -80,7 +80,7 @@ public:
 	virtual ~DdCiAdapter();
 
 	/**
-     * Deliver the received CAM TS Data to the receive buffer.
+	 * Deliver the received CAM TS Data to the receive buffer.
 	 * @param data the received TS packet(s) from the CAM; it have to point to
 	 *        the beginning of a packet (start with TS_SYNC_BYTE).
 	 * @param count the number of bytes in data (shall be at least TS_SIZE).
@@ -88,7 +88,11 @@ public:
 	 */
 	int DataRecv( uchar *data, int count );
 
+	/// get the caX device name
 	const char *GetCaDevName() { return caDevName; };
+
+	/// clear the CAM send and receive buffer
+	void ClrBuffers();
 };
 
 #endif //__DDCIADAPTER_H

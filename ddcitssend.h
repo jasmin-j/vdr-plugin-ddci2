@@ -52,6 +52,9 @@ private:
 	cMutex mtxWrite;       //< The synchronization mutex for rb write access
 	int pkgCntR;           //< package read counter
 	int pkgCntW;           //< package write counter
+	int pkgCntRL;          //< package read counter last
+	int pkgCntWL;          //< package write counter last
+
 	bool clear;            //< true, when the buffer shall be cleared
 	int cntSndDbg;         //< counter for data debugging
 	DDCI_RB_CLR_MTX_DECL(mtxClear)

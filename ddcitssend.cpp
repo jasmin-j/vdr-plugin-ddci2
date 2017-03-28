@@ -58,6 +58,8 @@ DdCiTsSend::DdCiTsSend( DdCiAdapter &the_adapter, int ci_fdw, cString &devNameCi
 , rb( BUF_SIZE, BUF_MARGIN, STAT_DDCITSSENDBUF, "DDCI CAM Send" )
 , pkgCntR( 0 )
 , pkgCntW( 0 )
+, pkgCntRL( 0 )
+, pkgCntWL( 0 )
 , clear( false )
 , cntSndDbg( 0 )
 {
@@ -153,14 +155,14 @@ void DdCiTsSend::Action()
 	LOG_FUNCTION_ENTER;
 
 	rb.SetTimeouts( 0, RUN_CHECK_TMO );
-	cTimeMs t(3000);
+	cTimeMs t (DBG_PKG_TMO);
 
 	while (Running()) {
 		if (clear) {
 			DDCI_RB_CLR_MTX_LOCK( &mtxClear )
 			rb.Clear();
-			// pkgCntW = 0;
-			// pkgCntR = 0;
+			pkgCntW = 0;
+			pkgCntR = 0;
 			clear = false;
 			cntSndDbg = 0;
 		}
@@ -199,8 +201,12 @@ void DdCiTsSend::Action()
 		}
 
 		if (t.TimedOut()) {
-			// L_DBG( "DdCiTsSend: BufW %d, CAMsent %d", pkgCntW, pkgCntR );
-			t.Set(3000);
+			if ((pkgCntR != pkgCntRL) || (pkgCntW != pkgCntWL)) {
+				L_DBG_M( LDM_CBS, "DdCiTsSend for %s CAM buff rd(-> CAM):%d, wr:%d", *ciDevName, pkgCntR, pkgCntW );
+				pkgCntRL = pkgCntR;
+				pkgCntWL = pkgCntW;
+			}
+			t.Set(DBG_PKG_TMO);
 		}
 	}
 

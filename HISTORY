@@ -1,6 +1,12 @@
 VDR Plugin 'ddci2' Revision History
 ----------------------------------
 
+2017-03-28 Version 1.0.1
+- Removed active flag as suggested by Klaus S. The channel switching time
+  is now decreased.
+- Added new debug flag 0x1000 to en/disable CAM buffer statistic printing
+- Stopdecrypting will no clear the CAM send and receive buffer.
+
 2017-03-28 Version 1.0.0
 - Added MTD support (Yeah, it is done!).
   Requires VDR 2.3.3, but does still compile with older VDR versions.

@@ -35,7 +35,7 @@
 #include <getopt.h>
 #include <string.h>
 
-static const char *VERSION = "1.0.0";
+static const char *VERSION = "1.0.1";
 static const char *DESCRIPTION = "External Digital Devices CI-Adapter";
 
 static const char *DEV_DVB_CI = "ci";
@@ -253,7 +253,7 @@ const char *PluginDdci::Description()
 const char *PluginDdci::CommandLineHelp()
 {
 	static const char *txt =
-	  "  -c        --clrsct       clear the scambling control bit before the"
+	  "  -c        --clrsct       clear the scambling control bit before the\n"
 	  "                           packet is send to VDR\n"
 	  "  -l        --loglevel     0/1/2/3 log nothing/error/info/debug\n"
 	  "  -d        --debugmask    Bitmask to enable special debug logging\n"
@@ -263,6 +263,8 @@ const char *PluginDdci::CommandLineHelp()
 	  "                           0x0400 ... CAM data read/write access (heavy\n"
 	  "                                      logging)\n"
 	  "                           0x0800 ... Scrambling control\n"
+	  "                           0x1000 ... CAM buffer statistic (quite much\n"
+	  "                                      logging)\n"
 	  ;
 
 	return txt;

@@ -50,8 +50,10 @@ private:
 	int fd;                //< .../frontendX/ciX device read file handle
 	cString ciDevName;     //< .../frontendX/ciX device path
 	cRingBufferLinear rb;  //< the CAM read buffer
-	int pkgCntR;           //< package read counter
-	int pkgCntW;           //< package write counter
+	int pkgCntR;           //< packages read from buffer
+	int pkgCntW;           //< packages written to buffer
+	int pkgCntRL;          //< package read counter last
+	int pkgCntWL;          //< package write counter last
 	bool clear;            //< true, when the buffer shall be cleared
 	int retry;             //< number of retries to send a packet
 	int cntRecDbg;         //< counter for data debugging

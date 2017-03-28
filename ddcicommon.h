@@ -42,6 +42,9 @@ static const bool STAT_DDCIRECVBUF   = STAT_BUFF_DEFAULT;
 static const bool STAT_DDCITSSENDBUF = STAT_BUFF_DEFAULT;
 static const bool STAT_DDCITSRECVBUF = STAT_BUFF_DEFAULT;
 
+// timeout for package buffer printing
+static const int DBG_PKG_TMO = 10000;
+
 /*
  * General purpose functions
  */

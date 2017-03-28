@@ -59,6 +59,8 @@ DdCiTsRecv::DdCiTsRecv( DdCiAdapter &the_adapter, int ci_fdr, cString &devNameCi
 , rb( BUF_SIZE, BUF_MARGIN, STAT_DDCITSRECVBUF, "DDCI CAM Recv" )
 , pkgCntR( 0 )
 , pkgCntW( 0 )
+, pkgCntRL( 0 )
+, pkgCntWL( 0 )
 , clear( false )
 , retry( 0 )
 , cntRecDbg( 0 )
@@ -132,8 +134,8 @@ void DdCiTsRecv::Deliver()
 		if (clear) {
 			DDCI_RB_CLR_MTX_LOCK( &mtxClear )
 			rb.Clear();
-			// pkgCntW = 0;
-			// pkgCntR = 0;
+			pkgCntW = 0;
+			pkgCntR = 0;
 			clear = false;
 			retry = 0;
 			cntRecDbg = 0;
@@ -190,7 +192,7 @@ void DdCiTsRecv::Action()
 	}
 
 	rb.SetTimeouts( 0, RUN_TMO );
-	cTimeMs t(3000);
+	cTimeMs t( DBG_PKG_TMO );
 
 	while (Running()) {
 		if (Poller.Poll( RUN_TMO )) {
@@ -215,8 +217,12 @@ void DdCiTsRecv::Action()
 		}
 
 		if (t.TimedOut()) {
-			// L_DBG( "DdCiTsRecv: CAMrcv %d, AdptrSent %d", pkgCntW, pkgCntR );
-			t.Set(3000);
+			if ((pkgCntR != pkgCntRL) || (pkgCntW != pkgCntWL)) {
+				L_DBG_M( LDM_CBS, "DdCiTsRecv for %s CAM buff wr(CAM ->):%d, rd:%d", *ciDevName, pkgCntW, pkgCntR );
+				pkgCntRL = pkgCntR;
+				pkgCntWL = pkgCntW;
+			}
+			t.Set(DBG_PKG_TMO);
 		}
 	}
 

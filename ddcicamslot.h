@@ -41,16 +41,16 @@ class DdCiTsSend;
  */
 class DdCiCamSlot: public cCamSlot
 {
-	cMutex mtxRun;        //< the synchronization mutex for Start/StopDecrypting
-	DdCiTsSend &ciSend;   //< the CAM TS sender
-	DdCiRecvBuf rBuffer;  //< the receive buffer
-	bool delivered;       //< true, if Decrypt did deliver data at last call
-	bool active;          //< true, if this slot does decrypting
-	int cntSctPkt;        //< number of scrambled packets got from CAM
-	int cntSctPktL;       //< number of scrambled packets got from CAM last
-	int cntSctClrPkt;     //< number of cleared scrambling control bits
-	int cntSctDbg;        //< counter for scrambling control debugging
-	cTimeMs timSctDbg;    //< timer for scrambling control debugging
+	DdCiAdapter &theAdapter; //< the adapter of this CAM slot
+	cMutex mtxRun;           //< the synchronization mutex for Start/StopDecrypting
+	DdCiTsSend &ciSend;      //< the CAM TS sender
+	DdCiRecvBuf rBuffer;     //< the receive buffer
+	bool delivered;          //< true, if Decrypt did deliver data at last call
+	int cntSctPkt;           //< number of scrambled packets got from CAM
+	int cntSctPktL;          //< number of scrambled packets got from CAM last
+	int cntSctClrPkt;        //< number of cleared scrambling control bits
+	int cntSctDbg;           //< counter for scrambling control debugging
+	cTimeMs timSctDbg;       //< timer for scrambling control debugging
 
 	void StopIt();
 
@@ -60,7 +60,7 @@ public:
 	 * Creates a new CAM slot for the given adapter.
 	 * The adapter will take care of deleting the CAM slot, so the caller must
 	 * not delete it!
-	 * @param adapter the CAM adapter this slot is associated
+	 * @param adapter the CAM adapter this slot is associated to
 	 * @param the buffer for the TS packets
 	 **/
 	DdCiCamSlot(DdCiAdapter &adapter, DdCiTsSend &sendCi);
