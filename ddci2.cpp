@@ -374,7 +374,7 @@ bool PluginDdci::Start()
 		L_INF( "Ignore-active-flag activated" );
 
 	if (CfgIsClrSct())
-		L_INF( "Clear scambling control bit activated" );
+		L_DBG_M( LDM_D, "Clear scrambling control bit activated" );
 
 	if (FindDdCi()) {
 		int adapter, ci, i=0;
