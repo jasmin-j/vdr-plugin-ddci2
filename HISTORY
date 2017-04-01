@@ -1,6 +1,14 @@
 VDR Plugin 'ddci2' Revision History
 ----------------------------------
 
+2017-04-01 Version 1.0.2
+- Re-implemented active flag, because of troubles with some DD CI hardware.
+  Also added option "-A" to still ignore this active flag.
+- Added new config options
+   -b/--bufsz       to set the CAM receive/send buffer size
+   -t/--sleeptimer  CAM receive/send/deliver thread sleep timer
+- Default buffer size is now 1500 packets.
+
 2017-03-28 Version 1.0.1
 - Removed active flag as suggested by Klaus S. The channel switching time
   is now decreased.
