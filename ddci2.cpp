@@ -48,6 +48,7 @@ static const int BUF_NUM_MAX = 10000;
 
 int LogLevel;
 int LogDbgMask;
+int cfgIgnAct;      // 1: active flag in DdCiCamSlot is ignored
 int cfgBufSz;       // in 188 byte packages
 int cfgClrSct;
 int cfgSleepTmo;    // in ms
@@ -226,6 +227,7 @@ PluginDdci::PluginDdci()
 	memset( adapters, 0x00, sizeof(adapters) );
 	LogLevel = LL_DEFAULT;
 	LogDbgMask = 0;
+	cfgIgnAct = 0;
 	cfgBufSz = BUF_NUM_DEF;
 	cfgClrSct = 0;
 	cfgSleepTmo = SLEEP_TMO_DEF;
@@ -263,6 +265,8 @@ const char *PluginDdci::Description()
 const char *PluginDdci::CommandLineHelp()
 {
 	static const char *txt =
+	  "  -A        --ignact       ignore active flag; speeds up channel switching to\n"
+	  "                           decryted channels\n"
 	  "  -b        --bufsz        CAM receive/send buffer size in packets a 188 bytes\n"
 	  "                           default: 1500, max: 10000\n"
 	  "  -c        --clrsct       clear the scambling control bit before the\n"
@@ -289,6 +293,7 @@ const char *PluginDdci::CommandLineHelp()
 bool PluginDdci::ProcessArgs( int argc, char *argv[] )
 {
 	static struct option long_options[] = {
+		{ "ignact", required_argument, NULL, 'A' },
 		{ "bufsz", required_argument, NULL, 'b' },
 		{ "clrsct", no_argument, NULL, 'c' },
 		{ "debugmask", required_argument, NULL, 'd' },
@@ -299,10 +304,14 @@ bool PluginDdci::ProcessArgs( int argc, char *argv[] )
 
 	int c, ll, logm;
 
-	while ((c = getopt_long( argc, argv, "b:cd:l:t:", long_options, NULL )) != -1) {
+	while ((c = getopt_long( argc, argv, "Ab:cd:l:t:", long_options, NULL )) != -1) {
 		const char * err_txt;
 
 		switch (c) {
+		case 'A':
+			cfgIgnAct = 1;
+			ll = 1; // no error
+			break;
 		case 'b':
 			err_txt = "Invalid Buffer number entered";
 			ll = sscanf( optarg, "%u", &cfgBufSz );
@@ -360,6 +369,9 @@ bool PluginDdci::Start()
 	L_DBG_M( LDM_D, "Debug logging mask 0x%04x", LogDbgMask );
 	L_DBG_M( LDM_D, "Buffer size %d packets", cfgBufSz );
 	L_DBG_M( LDM_D, "Sleep timer %dms", cfgSleepTmo );
+
+	if (CfgIgnAct())
+		L_INF( "Ignore-active-flag activated" );
 
 	if (CfgIsClrSct())
 		L_INF( "Clear scambling control bit activated" );

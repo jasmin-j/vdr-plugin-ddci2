@@ -34,6 +34,8 @@ Plugin Commandline
 
 Use vdr -h to see the command line arguments supported by the plugin.
 
+  -A        --ignact       ignore active flag; speeds up channel switching to
+                           decryted channels
   -b        --bufsz        CAM receive/send buffer size in packets a 188 bytes
                            default: 1500, max: 10000
   -c        --clrsct       clear the scambling control bit before the
@@ -50,6 +52,11 @@ Use vdr -h to see the command line arguments supported by the plugin.
                                       logging)
   -t        --sleeptimer   CAM receive/send/deliver thread sleep timer in ms
                            default: 100, max: 1000
+
+I am not sure, but I guess the currect driver is not correctly implemented for
+some CI slot drivers. Thus we still require the active flag on some DD CI hardware.
+I decided to generaly activate it. You can try to set "-A" to ignore it. If it
+works, the channel switchover to a decrypted channel should be faster.
 
 The default loglevel is info.
 The default debug logging mask is 0x0001. You can use option -d several

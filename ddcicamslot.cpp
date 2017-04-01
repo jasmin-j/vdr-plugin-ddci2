@@ -41,6 +41,7 @@ static const int CNT_SCT_DBG_MAX = 20;
 
 void DdCiCamSlot::StopIt()
 {
+	active = false;
 	rBuffer.Clear();
 	delivered = false;
 	cntSctPkt = 0;
@@ -58,6 +59,7 @@ DdCiCamSlot::DdCiCamSlot( DdCiAdapter &adapter, DdCiTsSend &sendCi )
 , theAdapter( adapter )
 , ciSend( sendCi )
 , delivered( false )
+, active( false )
 , cntSctPkt( 0 )
 , cntSctPktL( 0 )
 , cntSctClrPkt( 0 )
@@ -113,6 +115,8 @@ void DdCiCamSlot::StartDecrypting()
 
 	cMutexLock MutexLock(&mtxRun);
 
+	active = true;
+
 #if DDCI_MTD
 	if (!MtdActive())
 #endif
@@ -151,6 +155,10 @@ uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 #else
 	Count = TS_SIZE;
 #endif
+
+	if (!(active || CfgIgnAct())) {
+		return 0;
+	}
 
 	/*
 	 *  WRITE
@@ -219,6 +227,10 @@ uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 
 int DdCiCamSlot::DataRecv( uchar *data, int count )
 {
+	if (!(active || CfgIgnAct())) {
+		return count;   // not active, eat all the data
+	}
+
 	int written;
 
 #if DDCI_MTD

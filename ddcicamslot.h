@@ -46,6 +46,7 @@ class DdCiCamSlot: public cCamSlot
 	DdCiTsSend &ciSend;      //< the CAM TS sender
 	DdCiRecvBuf rBuffer;     //< the receive buffer
 	bool delivered;          //< true, if Decrypt did deliver data at last call
+	bool active;             //< true, if this slot does decrypting
 	int cntSctPkt;           //< number of scrambled packets got from CAM
 	int cntSctPktL;          //< number of scrambled packets got from CAM last
 	int cntSctClrPkt;        //< number of cleared scrambling control bits

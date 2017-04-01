@@ -59,9 +59,15 @@
 static const int BUF_MARGIN = TS_SIZE;
 
 // global config options
+extern int cfgIgnAct;
 extern int cfgClrSct;
 extern int cfgBufSz;
 extern int cfgSleepTmo;
+
+inline bool CfgIgnAct()
+{
+	return !!cfgIgnAct;   // !! .. convert integer to bool
+}
 
 inline bool CfgIsClrSct()
 {
