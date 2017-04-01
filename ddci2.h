@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// @file ddci.hp @brief Digital Devices Common Interface plugin for VDR.
+// @file ddci.h @brief Digital Devices Common Interface plugin for VDR.
 //
 // Copyright (c) 2013 - 2014 by Jasmin Jessich.  All Rights Reserved.
 //
