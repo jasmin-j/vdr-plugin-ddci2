@@ -32,7 +32,7 @@
 //------------------------------------------------------------------------
 
 DdCiRecvBuf::DdCiRecvBuf()
-: cRingBufferLinear( BUF_SIZE, BUF_MARGIN, STAT_DDCIRECVBUF, "DDCI Slot Recv" )
+: cRingBufferLinear( CalcRbBufSz(), BUF_MARGIN, STAT_DDCIRECVBUF, "DDCI Slot Recv" )
 {
 	LOG_FUNCTION_ENTER;
 	LOG_FUNCTION_EXIT;

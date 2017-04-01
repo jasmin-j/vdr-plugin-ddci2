@@ -40,9 +40,17 @@ static const char *DESCRIPTION = "External Digital Devices CI-Adapter";
 
 static const char *DEV_DVB_CI = "ci";
 
+static const int SLEEP_TMO_DEF = 100;    // in ms
+static const int SLEEP_TMO_MAX = 1000;
+
+static const int BUF_NUM_DEF = 1500;
+static const int BUF_NUM_MAX = 10000;
+
 int LogLevel;
 int LogDbgMask;
+int cfgBufSz;       // in 188 byte packages
 int cfgClrSct;
+int cfgSleepTmo;    // in ms
 
 
 /**
@@ -218,7 +226,9 @@ PluginDdci::PluginDdci()
 	memset( adapters, 0x00, sizeof(adapters) );
 	LogLevel = LL_DEFAULT;
 	LogDbgMask = 0;
+	cfgBufSz = BUF_NUM_DEF;
 	cfgClrSct = 0;
+	cfgSleepTmo = SLEEP_TMO_DEF;
 
 	LOG_FUNCTION_EXIT;
 }
@@ -253,6 +263,8 @@ const char *PluginDdci::Description()
 const char *PluginDdci::CommandLineHelp()
 {
 	static const char *txt =
+	  "  -b        --bufsz        CAM receive/send buffer size in packets a 188 bytes\n"
+	  "                           default: 1500, max: 10000\n"
 	  "  -c        --clrsct       clear the scambling control bit before the\n"
 	  "                           packet is send to VDR\n"
 	  "  -l        --loglevel     0/1/2/3 log nothing/error/info/debug\n"
@@ -265,6 +277,8 @@ const char *PluginDdci::CommandLineHelp()
 	  "                           0x0800 ... Scrambling control\n"
 	  "                           0x1000 ... CAM buffer statistic (quite much\n"
 	  "                                      logging)\n"
+	  "  -t        --sleeptimer   CAM receive/send/deliver thread sleep timer in ms\n"
+	  "                           default: 100, max: 1000\n"
 	  ;
 
 	return txt;
@@ -275,18 +289,26 @@ const char *PluginDdci::CommandLineHelp()
 bool PluginDdci::ProcessArgs( int argc, char *argv[] )
 {
 	static struct option long_options[] = {
+		{ "bufsz", required_argument, NULL, 'b' },
 		{ "clrsct", no_argument, NULL, 'c' },
-		{ "loglevel", required_argument, NULL, 'l' },
 		{ "debugmask", required_argument, NULL, 'd' },
+		{ "loglevel", required_argument, NULL, 'l' },
+		{ "sleeptimer", required_argument, NULL, 't' },
 		{ NULL, no_argument, NULL, 0 }
 	};
 
 	int c, ll, logm;
 
-	while ((c = getopt_long( argc, argv, "cd:l:", long_options, NULL )) != -1) {
+	while ((c = getopt_long( argc, argv, "b:cd:l:t:", long_options, NULL )) != -1) {
 		const char * err_txt;
 
 		switch (c) {
+		case 'b':
+			err_txt = "Invalid Buffer number entered";
+			ll = sscanf( optarg, "%u", &cfgBufSz );
+			if (cfgBufSz > BUF_NUM_MAX)
+				ll = 0;   // to enter error handling
+			break;
 		case 'c':
 			cfgClrSct = 1;
 			ll = 1; // no error
@@ -301,6 +323,12 @@ bool PluginDdci::ProcessArgs( int argc, char *argv[] )
 			err_txt = "Invalid Loglevel entered";
 			ll = sscanf( optarg, "%u", &LogLevel );
 			if (LogLevel > LOG_L_MAX)
+				ll = 0;   // to enter error handling
+			break;
+		case 't':
+			err_txt = "Invalid Sleep timer value entered";
+			ll = sscanf( optarg, "%u", &cfgSleepTmo );
+			if (cfgSleepTmo > SLEEP_TMO_MAX)
 				ll = 0;   // to enter error handling
 			break;
 		default:
@@ -330,6 +358,8 @@ bool PluginDdci::Start()
 	L_INF( "plugin version %s initializing (compiled for VDR version %s)", VERSION, VDRVERSION );
 
 	L_DBG_M( LDM_D, "Debug logging mask 0x%04x", LogDbgMask );
+	L_DBG_M( LDM_D, "Buffer size %d packets", cfgBufSz );
+	L_DBG_M( LDM_D, "Sleep timer %dms", cfgSleepTmo );
 
 	if (CfgIsClrSct())
 		L_INF( "Clear scambling control bit activated" );

@@ -28,6 +28,8 @@
 #ifndef __DDCIRECVBUF_H
 #define __DDCIRECVBUF_H
 
+#include "ddci2.h"
+
 #include <vdr/ringbuffer.h>
 #include <vdr/remux.h>   // TS_SIZE, TS_SYNC_BYTE
 
@@ -36,13 +38,6 @@
  */
 class DdCiRecvBuf: public cRingBufferLinear
 {
-private:
-	static const int BUF_NUM = 2000;
-	static const int BUF_MARGIN = TS_SIZE;
-
-	// cRingBufferLinear requires one margin and 1 byte for internal reasons
-	static const int BUF_SIZE = (BUF_MARGIN * (BUF_NUM + 1)) + 1;
-
 public:
 
 	/// Constructor.

@@ -60,12 +60,6 @@ private:
 	DdCiTsRecvDeliver tsdeliver; //< TS Data deliver thread
 	DDCI_RB_CLR_MTX_DECL(mtxClear)
 
-	static const int BUF_NUM = 2000;
-	static const int BUF_MARGIN = TS_SIZE;
-
-	// cRingBufferLinear requires one margin and 1 byte for internal reasons
-	static const int BUF_SIZE = (BUF_MARGIN * (BUF_NUM + 1)) + 1;
-
 	void CleanUp();
 
 public:

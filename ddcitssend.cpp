@@ -55,7 +55,7 @@ DdCiTsSend::DdCiTsSend( DdCiAdapter &the_adapter, int ci_fdw, cString &devNameCi
 , adapter( the_adapter )
 , fd( ci_fdw )
 , ciDevName( devNameCi )
-, rb( BUF_SIZE, BUF_MARGIN, STAT_DDCITSSENDBUF, "DDCI CAM Send" )
+, rb( CalcRbBufSz(), BUF_MARGIN, STAT_DDCITSSENDBUF, "DDCI CAM Send" )
 , pkgCntR( 0 )
 , pkgCntW( 0 )
 , pkgCntRL( 0 )
@@ -150,11 +150,11 @@ int DdCiTsSend::Write( const uchar *data, int count )
 
 void DdCiTsSend::Action()
 {
-	static const int RUN_CHECK_TMO = 100;   // get may wait 100ms
+	const int run_check_tmo = CfgGetSleepTmo();
 
 	LOG_FUNCTION_ENTER;
 
-	rb.SetTimeouts( 0, RUN_CHECK_TMO );
+	rb.SetTimeouts( 0, run_check_tmo );
 	cTimeMs t (DBG_PKG_TMO);
 
 	while (Running()) {
@@ -180,7 +180,7 @@ void DdCiTsSend::Action()
 			int len = cnt - skipped;
 			len -= (len % TS_SIZE);     // only whole TS frames must be written
 			if (len >= TS_SIZE) {
-				int w = WriteAllOrNothing( fd, frame, len, 5 * RUN_CHECK_TMO, RUN_CHECK_TMO );
+				int w = WriteAllOrNothing( fd, frame, len, 5 * run_check_tmo, run_check_tmo );
 				if (w >= 0) {
 					int remain = len - w;
 					if (remain > 0) {

@@ -30,6 +30,7 @@
 #define __DDCI2_H
 
 #include <vdr/config.h>
+#include <vdr/remux.h>   // TS_SIZE
 
 #if (VDRVERSNUM >= 20303)
 # define DDCI_MTD         1    // MTD enabled
@@ -43,16 +44,6 @@
 # define DDCI_DECRYPT_MORE  0  // older VDR can't handle more packets
 #endif
 
-
-// global config options
-extern int cfgClrSct;
-
-inline bool CfgIsClrSct()
-{
-  return cfgClrSct != 0;
-}
-
-
 #if DDCI_RB_CLR_MTX
 
 #define DDCI_RB_CLR_MTX_DECL(_m)  cMutex _m;
@@ -64,5 +55,33 @@ inline bool CfgIsClrSct()
 #define DDCI_RB_CLR_MTX_LOCK(_m)
 
 #endif // DDCI_RB_CLR_MTX
+
+static const int BUF_MARGIN = TS_SIZE;
+
+// global config options
+extern int cfgClrSct;
+extern int cfgBufSz;
+extern int cfgSleepTmo;
+
+inline bool CfgIsClrSct()
+{
+	return cfgClrSct != 0;
+}
+
+inline int CfgGetBufSz()
+{
+	return cfgBufSz;
+}
+
+inline int CfgGetSleepTmo()
+{
+	return cfgSleepTmo;
+}
+
+inline int CalcRbBufSz()
+{
+	// cRingBufferLinear requires one margin and 1 byte for internal reasons
+	return (BUF_MARGIN * (CfgGetBufSz() + 1)) + 1;
+}
 
 #endif // __DDCI2_H

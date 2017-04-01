@@ -32,7 +32,6 @@
 
 #include <vdr/tools.h>
 
-static const int RUN_TMO = 100;   // our sleeping period (ms)
 static const int CNT_REC_DBG_MAX = 100;
 
 //------------------------------------------------------------------------
@@ -56,7 +55,7 @@ DdCiTsRecv::DdCiTsRecv( DdCiAdapter &the_adapter, int ci_fdr, cString &devNameCi
 , adapter( the_adapter )
 , fd( ci_fdr )
 , ciDevName( devNameCi )
-, rb( BUF_SIZE, BUF_MARGIN, STAT_DDCITSRECVBUF, "DDCI CAM Recv" )
+, rb( CalcRbBufSz(), BUF_MARGIN, STAT_DDCITSRECVBUF, "DDCI CAM Recv" )
 , pkgCntR( 0 )
 , pkgCntW( 0 )
 , pkgCntRL( 0 )
@@ -168,7 +167,7 @@ void DdCiTsRecv::Deliver()
 		} else {
 			if (retry++ < 3) {
 				/* The receive buffer of the adapter is full, so we need to wait a little bit. */
-				cCondWait::SleepMs( RUN_TMO );
+				cCondWait::SleepMs( CfgGetSleepTmo() );
 			} else {
 				L_ERR( "Can't write packet VDR CamSlot for CI adapter (%s)", adapter.GetCaDevName() );
 				rb.Del( TS_SIZE );
@@ -191,11 +190,11 @@ void DdCiTsRecv::Action()
 		return;
 	}
 
-	rb.SetTimeouts( 0, RUN_TMO );
+	rb.SetTimeouts( 0, CfgGetSleepTmo() );
 	cTimeMs t( DBG_PKG_TMO );
 
 	while (Running()) {
-		if (Poller.Poll( RUN_TMO )) {
+		if (Poller.Poll( CfgGetSleepTmo() )) {
 			errno = 0;
 			DDCI_RB_CLR_MTX_LOCK( &mtxClear )
 			int r = rb.Read( fd );

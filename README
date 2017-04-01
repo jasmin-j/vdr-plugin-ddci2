@@ -34,6 +34,8 @@ Plugin Commandline
 
 Use vdr -h to see the command line arguments supported by the plugin.
 
+  -b        --bufsz        CAM receive/send buffer size in packets a 188 bytes
+                           default: 1500, max: 10000
   -c        --clrsct       clear the scambling control bit before the
                            packet is send to VDR
   -l        --loglevel     0/1/2/3 log nothing/error/info/debug
@@ -46,6 +48,8 @@ Use vdr -h to see the command line arguments supported by the plugin.
                            0x0800 ... Scrambling control
                            0x1000 ... CAM buffer statistic (quite much
                                       logging)
+  -t        --sleeptimer   CAM receive/send/deliver thread sleep timer in ms
+                           default: 100, max: 1000
 
 The default loglevel is info.
 The default debug logging mask is 0x0001. You can use option -d several
