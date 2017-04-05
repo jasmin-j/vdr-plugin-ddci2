@@ -1,6 +1,9 @@
 VDR Plugin 'ddci2' Revision History
 ----------------------------------
 
+2017-04-05 Version 1.0.3
+- Support non MCD CAMs for VDR 2.3.3 correctly.
+
 2017-04-01 Version 1.0.2
 - Re-implemented active flag, because of troubles with some DD CI hardware.
   Also added option "-A" to still ignore this active flag.
