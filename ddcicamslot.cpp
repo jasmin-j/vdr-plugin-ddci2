@@ -161,7 +161,7 @@ uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 	}
 
 	/*
-	 *  WRITE
+	 * WRITE
 	 */
 	Count = ciSend.Write( Data, Count );
 
