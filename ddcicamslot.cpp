@@ -150,11 +150,13 @@ uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 	 * not worth to lock here.
 	 */
 
+	if (Data) {
 #if DDCI_DECRYPT_MORE
-	Count -= (Count % TS_SIZE);  // we write only whole TS frames
+		Count -= (Count % TS_SIZE);  // we write only whole TS frames
 #else
-	Count = TS_SIZE;
+		Count = TS_SIZE;
 #endif
+	}
 
 	if (!(active || CfgIgnAct())) {
 		return 0;
@@ -163,7 +165,8 @@ uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 	/*
 	 * WRITE
 	 */
-	Count = ciSend.Write( Data, Count );
+	if (Data)
+		Count = ciSend.Write( Data, Count );
 
 #if DDCI_MTD
 	/*
