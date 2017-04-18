@@ -38,7 +38,7 @@
 static const char *VERSION = "1.0.3";
 static const char *DESCRIPTION = "External Digital Devices CI-Adapter";
 
-static const char *DEV_DVB_CI = "ci";
+static const char *DEV_DVB_CIDEVS[] = { "ci", "sec", NULL };
 
 static const int SLEEP_TMO_DEF = 100;    // in ms
 static const int SLEEP_TMO_MAX = 1000;
@@ -129,6 +129,29 @@ static int CiDevOpen( const char *name, int adapter, int ci, int mode )
 
 //------------------------------------------------------------------------
 
+static int CiGetDevIdx( int adapter, int ci )
+{
+	LOG_FUNCTION_ENTER;
+
+	int cidev = 0, res;
+	struct stat s;
+
+	while (DEV_DVB_CIDEVS[cidev] != NULL) {
+		cString fname( CiDevName( DEV_DVB_CIDEVS[cidev], adapter, ci ) );
+		res = stat(fname, &s);
+		if (!res)
+			return cidev;
+
+		cidev++;
+	}
+
+	LOG_FUNCTION_EXIT;
+
+	return -1;
+}
+
+//------------------------------------------------------------------------
+
 void PluginDdci::Cleanup()
 {
 	LOG_FUNCTION_ENTER;
@@ -158,26 +181,36 @@ bool PluginDdci::FindDdCi()
 					struct dirent *f;
 					int ci = -1;
 					while ((f = adapterdir.Next()) != NULL) {
-						if (DirentIsName( f, DEV_DVB_CI )) {
-							ci = DirentGetNameNum( f, strlen( DEV_DVB_CI ) );
+						int cidev = 0;
 
-							// there must be no frontend device!
-							cReadDir adapterdir2( AddDirectory( DEV_DVB_BASE, a->d_name ) );
-							struct dirent *f2;
-							while ((f2 = adapterdir2.Next()) != NULL) {
-								if (DirentIsName( f2, DEV_DVB_FRONTEND )) {
-									ci = -1;
-									break;
+						while (DEV_DVB_CIDEVS[cidev] != NULL) {
+							if (DirentIsName( f, DEV_DVB_CIDEVS[cidev] )) {
+								ci = DirentGetNameNum( f, strlen( DEV_DVB_CIDEVS[cidev] ) );
+
+								// there must be no frontend device!
+								cReadDir adapterdir2( AddDirectory( DEV_DVB_BASE, a->d_name ) );
+								struct dirent *f2;
+								while ((f2 = adapterdir2.Next()) != NULL) {
+									if (DirentIsName( f2, DEV_DVB_FRONTEND )) {
+										ci = -1;
+										break;
+									}
 								}
+								// frontend found -> ignore this adapter
+								if (ci == -1)
+									break;
+
+								cString fname( CiDevName( DEV_DVB_CIDEVS[cidev], adapter, ci ) );
+								L_DBG_M( LDM_D, "found DD CI adapter '%s'", *fname );
+
+								dd_ci_names.Append( strdup( cString::sprintf( "%2d %2d", adapter, ci ) ) );
 							}
-							// frontend found -> ignore this adapter
-							if (ci == -1)
+
+							// stop if a usable ci device was found
+							if (ci != -1)
 								break;
 
-							cString fname( CiDevName( DEV_DVB_CI, adapter, ci ) );
-							L_DBG_M( LDM_D, "found DD CI adapter '%s'", *fname );
-
-							dd_ci_names.Append( strdup( cString::sprintf( "%2d %2d", adapter, ci ) ) );
+							cidev++;
 						}
 					}
 				}
@@ -381,13 +414,19 @@ bool PluginDdci::Start()
 		while (GetDdCi( adapter, ci )) {
 			L_DBG_M( LDM_F, "Try to open ca%d", adapter );
 			int ca_fd = CiDevOpen( DEV_DVB_CA, adapter, ci, O_RDWR );
-			L_DBG_M( LDM_F, "Try to open ci%d-w", adapter );
-			int ci_fdw = CiDevOpen( DEV_DVB_CI, adapter, ci, O_WRONLY );
-			L_DBG_M( LDM_F, "Try to open ci%d-r", adapter );
-			int ci_fdr = CiDevOpen( DEV_DVB_CI, adapter, ci, O_RDONLY | O_NONBLOCK );
+			L_DBG_M( LDM_F, "Checking which CI device to use");
+			int ci_dev = CiGetDevIdx( adapter, ci );
+			if (ci_dev < 0) {
+				L_ERR_LINE( "No device node for adapter %d ci %d, skipping", adapter, ci );
+				continue;
+			}
+			L_DBG_M( LDM_F, "Try to open %s%d-w", DEV_DVB_CIDEVS[ci_dev], adapter );
+			int ci_fdw = CiDevOpen( DEV_DVB_CIDEVS[ci_dev], adapter, ci, O_WRONLY );
+			L_DBG_M( LDM_F, "Try to open %s%d-r", DEV_DVB_CIDEVS[ci_dev], adapter );
+			int ci_fdr = CiDevOpen( DEV_DVB_CIDEVS[ci_dev], adapter, ci, O_RDONLY | O_NONBLOCK );
 			if ((ca_fd >= 0) && (ci_fdw >= 0) && (ci_fdr >= 0)) {
 				cString fnameCa( CiDevName( DEV_DVB_CA, adapter, ci ) );
-				cString fnameCi( CiDevName( DEV_DVB_CI, adapter, ci ) );
+				cString fnameCi( CiDevName( DEV_DVB_CIDEVS[ci_dev], adapter, ci ) );
 
 				L_INF( "Creating DdCiAdapter %d (%s)", i, (const char *)fnameCa );
 
