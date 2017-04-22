@@ -453,7 +453,11 @@ void PluginDdci::Stop()
 {
 	LOG_FUNCTION_ENTER;
 
-	Cleanup();
+	for (int i = 0; i < MAXDEVICES; i++) {
+		if (adapters[ i ])
+			adapters[ i ]->Cancel( 3 );
+	}
+
 	L_INF( "plugin stopped" );
 
 	LOG_FUNCTION_EXIT;

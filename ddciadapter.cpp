@@ -95,8 +95,6 @@ DdCiAdapter::~DdCiAdapter()
 {
 	LOG_FUNCTION_ENTER;
 
-	ciSend.Cancel( 3 );  // stop the TS sender thread, before we stop this thread
-	ciRecv.Cancel( 3 );  // stop the TS receiver thread, before we stop this thread
 	Cancel( 3 );
 	CleanUp();
 
@@ -128,8 +126,11 @@ void DdCiAdapter::Action()
 	LOG_FUNCTION_ENTER;
 
 	if (ciSend.Start())
-		if (ciRecv.Start())
+		if (ciRecv.Start()) {
 			cCiAdapter::Action();
+			ciSend.Cancel( 3 );
+			ciRecv.Cancel( 3 );
+		}
 		else {
 			L_ERR( "couldn't start CAM TS Recv for CI adapter (%s)", *caDevName );
 			ciSend.Cancel( 3 );
