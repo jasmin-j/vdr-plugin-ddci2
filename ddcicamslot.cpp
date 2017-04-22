@@ -41,6 +41,7 @@ static const int CNT_SCT_DBG_MAX = 20;
 
 void DdCiCamSlot::StopIt()
 {
+	cMutexLock MutexLock(&mtxRun);
 	active = false;
 	rBuffer.Clear();
 	delivered = false;
@@ -80,7 +81,6 @@ DdCiCamSlot::~DdCiCamSlot()
 {
 	LOG_FUNCTION_ENTER;
 
-	cMutexLock MutexLock(&mtxRun);
 	StopIt();
 
 	LOG_FUNCTION_EXIT;
@@ -93,8 +93,6 @@ bool DdCiCamSlot::Reset()
 	LOG_FUNCTION_ENTER;
 
 	L_FUNC_NAME();
-
-	cMutexLock MutexLock(&mtxRun);
 
 	bool ret = cCamSlot::Reset();
 	if (ret)
@@ -113,9 +111,14 @@ void DdCiCamSlot::StartDecrypting()
 
 	L_FUNC_NAME();
 
-	cMutexLock MutexLock(&mtxRun);
+
+	// to lock it against StopIt
+	mtxRun.Lock();
 
 	active = true;
+
+	// need to unlock it before base class call to avoid deadlock
+	mtxRun.Unlock();
 
 #if DDCI_MTD
 	if (!MtdActive())
@@ -133,9 +136,8 @@ void DdCiCamSlot::StopDecrypting()
 
 	L_FUNC_NAME();
 
-	cMutexLock MutexLock(&mtxRun);
-
 	cCamSlot::StopDecrypting();
+
 	StopIt();
 
 	LOG_FUNCTION_EXIT;
