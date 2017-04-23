@@ -121,6 +121,13 @@ void DdCiAdapter::ClrBuffers()
 
 //------------------------------------------------------------------------
 
+void DdCiAdapter::Cancel( int waitSec )
+{
+	cThread::Cancel( waitSec );
+}
+
+//------------------------------------------------------------------------
+
 void DdCiAdapter::Action()
 {
 	LOG_FUNCTION_ENTER;

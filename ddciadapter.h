@@ -93,6 +93,9 @@ public:
 
 	/// clear the CAM send and receive buffer
 	void ClrBuffers();
+
+	/// stop the thread
+	void Cancel( int waitSec = 0 );
 };
 
 #endif //__DDCIADAPTER_H
