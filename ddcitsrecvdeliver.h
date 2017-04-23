@@ -41,14 +41,14 @@ class DdCiTsRecvDeliver: public cThread
 {
 private:
 	DdCiTsRecv &tsrecv;  //< the CAM TS receiver with the buffer
-	cString ciDevName;   //< .../frontendX/ciX device path
+	cString ciDevName;   //< .../adapterX/ciY device path
 
 public:
 	/**
 	 * Constructor.
 	 * Creates a new CAM TS deliver thread object.
 	 * @param the_tsrecv the
-	 * @param devNameCi the name of the device (.../frontendX/ciX)
+	 * @param devNameCi the name of the device (.../adapterX/ciY)
 	 **/
 	DdCiTsRecvDeliver( DdCiTsRecv &the_tsrecv, cString &devNameCi );
 

@@ -35,10 +35,11 @@
 #include <getopt.h>
 #include <string.h>
 
-static const char *VERSION = "1.0.4-rc1";
+static const char *VERSION = "1.0.4-rc2";
 static const char *DESCRIPTION = "External Digital Devices CI-Adapter";
 
-static const char *DEV_DVB_CIDEVS[] = { "ci", "sec", NULL };
+static const char *DEV_DVB_CIDEVS[] = { "ci", "sec" };
+static const int DEV_DVB_CIDEVS_NUM = ARRAY_SIZE(DEV_DVB_CIDEVS);
 
 static const int SLEEP_TMO_DEF = 100;    // in ms
 static const int SLEEP_TMO_MAX = 1000;
@@ -53,6 +54,33 @@ int cfgBufSz;       // in 188 byte packages
 int cfgClrSct;
 int cfgSleepTmo;    // in ms
 
+// the struct to be used in the vecter of found DD CI devices
+class DdCiName
+{
+public:
+	int adapter;     //< .../adapterX number
+	int ci;          //< .../......../ciY ci number
+	cString ciName;  //< CI device name (see DEV_DVB_CIDEVS)
+
+	DdCiName( int Adapter, int Ci, const char *CiName );
+
+	cString CiName( void ) const;
+	cString FullCiName( void ) const;
+	cString CaName( void ) const;
+	cString FullCaName( void ) const;
+
+	// required for DdCiNameList::Sort
+	static int Compare(const void *a, const void *b);
+};
+
+class DdCiNameList : public cVector<DdCiName *> {
+public:
+	DdCiNameList( int Allocated = 10 ): cVector<DdCiName *>(Allocated) {}
+	virtual ~DdCiNameList();
+	void Sort()	{ cVector<DdCiName *>::Sort(DdCiName::Compare); }
+	virtual void Clear(void);
+	void Print(void);
+};
 
 /**
  * This class implements the interface to the CAM device.
@@ -61,15 +89,16 @@ class PluginDdci: public cPlugin
 {
 private:
 	DdCiAdapter *adapters[ MAXDEVICES ];
-
-	/* tupples of numbers "A C", where A is the adapter number and C the CI device number
-	 * for the device directory structure "/dev/dvb/adapterA/ciC"
-	 */
-	cStringList dd_ci_names;
+	DdCiNameList dd_ci_names;
 
 	void Cleanup();
+
+	/* add the given file to dd_ci_names, if it is a ci device */
+	bool AddDdCiDev( struct dirent *f, int adapter, const char *adapter_name, const char *ci_name );
+	/* add all found ci devices with names from DEV_DVB_CIDEVS to dd_ci_names */
+	bool AddDdCiDevs( struct dirent *f, int adapter, const char *adapter_name );
 	bool FindDdCi();  // fill dd_ci_names; returns TRUE, if one or more ci devices are found
-	bool GetDdCi( int &adapter, int &ci );  // get the next tupple from list
+	DdCiName *GetDdCi( void ); // get next ci device from dd_ci_names (caller needs to free the pointer!)
 
 public:
 	PluginDdci();
@@ -106,21 +135,27 @@ static inline int DirentGetNameNum( struct dirent *d, int offset )
 
 //------------------------------------------------------------------------
 
-static inline cString CiDevName( const char *name, int adapter, int ci )
+static inline cString CxDevName( const char *name, int adapter, int ci )
 {
 	return cString::sprintf( "%s/%s%d/%s%d", DEV_DVB_BASE, DEV_DVB_ADAPTER, adapter, name, ci );
 }
 
 //------------------------------------------------------------------------
 
-static int CiDevOpen( const char *name, int adapter, int ci, int mode )
+static inline cString CxName( const char *name, int ci )
+{
+	return cString::sprintf( "%s%d", name, ci );
+}
+
+//------------------------------------------------------------------------
+
+static int CxDevOpen( const char *name, int mode )
 {
 	LOG_FUNCTION_ENTER;
 
-	cString fname( CiDevName( name, adapter, ci ) );
-	int fd = open( fname, mode );
+	int fd = open( name, mode );
 	if (fd < 0)
-		L_ERR_LINE( "Couldn't open %s with mode 0x%x: %m", *fname, mode );
+		L_ERR_LINE( "Couldn't open %s with mode 0x%x: %m", name, mode );
 
 	LOG_FUNCTION_EXIT;
 
@@ -129,25 +164,79 @@ static int CiDevOpen( const char *name, int adapter, int ci, int mode )
 
 //------------------------------------------------------------------------
 
-static int CiGetDevIdx( int adapter, int ci )
+DdCiNameList::~DdCiNameList()
 {
-	LOG_FUNCTION_ENTER;
+	Clear();
+}
 
-	int cidev = 0, res;
-	struct stat s;
+//------------------------------------------------------------------------
 
-	while (DEV_DVB_CIDEVS[cidev] != NULL) {
-		cString fname( CiDevName( DEV_DVB_CIDEVS[cidev], adapter, ci ) );
-		res = stat(fname, &s);
-		if (!res)
-			return cidev;
+void DdCiNameList::Clear(void)
+{
+	// first delete all stored objects
+	for (int i = 0; i < Size(); i++)
+		delete At( i );
 
-		cidev++;
+	// and now clear them all
+	cVector<DdCiName *>::Clear();
+}
+
+//------------------------------------------------------------------------
+
+void DdCiNameList::Print(void)
+{
+	for (int i = 0; i < Size(); i++) {
+		DdCiName *dd_ci_name = At( i );
+
+		L_DBG_M( LDM_D, "DdCiNameList [%d]:'%s'", i, *dd_ci_name->FullCiName() );
 	}
+}
 
-	LOG_FUNCTION_EXIT;
+//------------------------------------------------------------------------
 
-	return -1;
+DdCiName::DdCiName( int Adapter, int Ci, const char *CiName )
+: adapter( Adapter )
+, ci( Ci )
+, ciName( CiName )
+{
+}
+
+//------------------------------------------------------------------------
+
+cString DdCiName::CiName( void ) const
+{
+	return ::CxName( ciName, ci );
+}
+
+//------------------------------------------------------------------------
+
+cString DdCiName::FullCiName( void ) const
+{
+	return CxDevName( ciName, adapter, ci );
+}
+
+//------------------------------------------------------------------------
+
+cString DdCiName::CaName( void ) const
+{
+	return ::CxName( DEV_DVB_CA, ci );
+}
+
+//------------------------------------------------------------------------
+
+cString DdCiName::FullCaName( void ) const
+{
+	return CxDevName( DEV_DVB_CA, adapter, ci );
+}
+
+//------------------------------------------------------------------------
+
+int DdCiName::Compare(const void *a, const void *b)
+{
+	const DdCiName *ddci_a = *(static_cast< const DdCiName * const *>(a));
+	const DdCiName *ddci_b = *(static_cast< const DdCiName * const *>(b));
+
+	return strcmp( ddci_a->FullCiName(), ddci_b->FullCiName());
 }
 
 //------------------------------------------------------------------------
@@ -166,6 +255,47 @@ void PluginDdci::Cleanup()
 
 //------------------------------------------------------------------------
 
+bool PluginDdci::AddDdCiDev( struct dirent *f, int adapter, const char *adapter_name, const char *ci_name )
+{
+	bool ret = false;
+
+	if (DirentIsName( f, ci_name )) {
+		int ci = DirentGetNameNum( f, strlen( ci_name ) );
+
+		// there must be no frontend device!
+		cReadDir adapterdir2( AddDirectory( DEV_DVB_BASE, adapter_name ) );
+		struct dirent *f2;
+		while ((f2 = adapterdir2.Next()) != NULL) {
+			if (DirentIsName( f2, DEV_DVB_FRONTEND )) {
+				return false;  // frontend found -> ignore this adapter
+			}
+		}
+
+		DdCiName *dd_ci_name = new DdCiName( adapter, ci, ci_name );
+
+		L_DBG_M( LDM_D, "found DD CI adapter '%s'", *dd_ci_name->FullCiName() );
+
+		dd_ci_names.Append( dd_ci_name );
+		ret = true;
+	}
+
+	return ret;
+}
+
+//------------------------------------------------------------------------
+
+bool PluginDdci::AddDdCiDevs( struct dirent *f, int adapter, const char *adapter_name )
+{
+	int ret = false;
+
+	for (int cidev = 0; cidev < DEV_DVB_CIDEVS_NUM; ++cidev)
+		ret |= AddDdCiDev( f, adapter, adapter_name, DEV_DVB_CIDEVS[cidev] );
+
+	return ret;
+}
+
+//------------------------------------------------------------------------
+
 bool PluginDdci::FindDdCi()
 {
 	LOG_FUNCTION_ENTER;
@@ -179,40 +309,8 @@ bool PluginDdci::FindDdCi()
 				cReadDir adapterdir( AddDirectory( DEV_DVB_BASE, a->d_name ) );
 				if (adapterdir.Ok()) {
 					struct dirent *f;
-					int ci = -1;
-					while ((f = adapterdir.Next()) != NULL) {
-						int cidev = 0;
-
-						while (DEV_DVB_CIDEVS[cidev] != NULL) {
-							if (DirentIsName( f, DEV_DVB_CIDEVS[cidev] )) {
-								ci = DirentGetNameNum( f, strlen( DEV_DVB_CIDEVS[cidev] ) );
-
-								// there must be no frontend device!
-								cReadDir adapterdir2( AddDirectory( DEV_DVB_BASE, a->d_name ) );
-								struct dirent *f2;
-								while ((f2 = adapterdir2.Next()) != NULL) {
-									if (DirentIsName( f2, DEV_DVB_FRONTEND )) {
-										ci = -1;
-										break;
-									}
-								}
-								// frontend found -> ignore this adapter
-								if (ci == -1)
-									break;
-
-								cString fname( CiDevName( DEV_DVB_CIDEVS[cidev], adapter, ci ) );
-								L_DBG_M( LDM_D, "found DD CI adapter '%s'", *fname );
-
-								dd_ci_names.Append( strdup( cString::sprintf( "%2d %2d", adapter, ci ) ) );
-							}
-
-							// stop if a usable ci device was found
-							if (ci != -1)
-								break;
-
-							cidev++;
-						}
-					}
+					while ((f = adapterdir.Next()) != NULL)
+						AddDdCiDevs( f, adapter, a->d_name);
 				}
 			}
 		}
@@ -232,18 +330,16 @@ bool PluginDdci::FindDdCi()
 
 //------------------------------------------------------------------------
 
-bool PluginDdci::GetDdCi( int &adapter, int &ci )
+DdCiName *PluginDdci::GetDdCi( void )
 {
 	LOG_FUNCTION_ENTER;
 
-	bool ret = false;
+	DdCiName *ret = 0;
 
-	for (int i = 0; i < dd_ci_names.Size(); i++) {
-		if (2 == sscanf( dd_ci_names[ i ], "%d %d", &adapter, &ci )) {
-			dd_ci_names.Remove( i );
-			ret = true;
-			break;
-		}
+	// get always the first object until the list is empty
+	if ( dd_ci_names.Size() ) {
+		ret = dd_ci_names.At( 0 );
+		dd_ci_names.Remove( 0 );
 	}
 
 	LOG_FUNCTION_EXIT;
@@ -410,26 +506,19 @@ bool PluginDdci::Start()
 		L_DBG_M( LDM_D, "Clear scrambling control bit activated" );
 
 	if (FindDdCi()) {
-		int adapter, ci, i=0;
-		while (GetDdCi( adapter, ci )) {
-			L_DBG_M( LDM_F, "Try to open ca%d", adapter );
-			int ca_fd = CiDevOpen( DEV_DVB_CA, adapter, ci, O_RDWR );
-			L_DBG_M( LDM_F, "Checking which CI device to use");
-			int ci_dev = CiGetDevIdx( adapter, ci );
-			if (ci_dev < 0) {
-				L_ERR_LINE( "No device node for adapter %d ci %d, skipping", adapter, ci );
-				continue;
-			}
-			L_DBG_M( LDM_F, "Try to open %s%d-w", DEV_DVB_CIDEVS[ci_dev], adapter );
-			int ci_fdw = CiDevOpen( DEV_DVB_CIDEVS[ci_dev], adapter, ci, O_WRONLY );
-			L_DBG_M( LDM_F, "Try to open %s%d-r", DEV_DVB_CIDEVS[ci_dev], adapter );
-			int ci_fdr = CiDevOpen( DEV_DVB_CIDEVS[ci_dev], adapter, ci, O_RDONLY | O_NONBLOCK );
+		int i = 0;
+		while (DdCiName *dd_ci_name = GetDdCi()) {
+			cString fnameCa( dd_ci_name->FullCaName() );
+			cString fnameCi( dd_ci_name->FullCiName() );
+
+			L_DBG_M( LDM_F, "Try to open %s", *fnameCa );
+			int ca_fd = CxDevOpen( fnameCa, O_RDWR );
+			L_DBG_M( LDM_F, "Try to open %s (w)", *fnameCi );
+			int ci_fdw = CxDevOpen( fnameCi, O_WRONLY );
+			L_DBG_M( LDM_F, "Try to open %s (r)", *fnameCi );
+			int ci_fdr = CxDevOpen( fnameCi, O_RDONLY | O_NONBLOCK );
 			if ((ca_fd >= 0) && (ci_fdw >= 0) && (ci_fdr >= 0)) {
-				cString fnameCa( CiDevName( DEV_DVB_CA, adapter, ci ) );
-				cString fnameCi( CiDevName( DEV_DVB_CIDEVS[ci_dev], adapter, ci ) );
-
-				L_INF( "Creating DdCiAdapter %d (%s)", i, (const char *)fnameCa );
-
+				L_INF( "Creating DdCiAdapter %d (%s)", i, *fnameCa );
 				adapters[ i++ ] = new DdCiAdapter( ca_fd, ci_fdw, ci_fdr, fnameCa, fnameCi );
 			} else {
 				L_DBG_M( LDM_D, "Fds -> ca: %d, ciw: %d, cir:%d", ca_fd, ci_fdw, ci_fdr );
@@ -437,6 +526,7 @@ bool PluginDdci::Start()
 				close( ci_fdw );
 				close( ci_fdr );
 			}
+			delete dd_ci_name;
 		}
 	}
 

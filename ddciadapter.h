@@ -42,8 +42,8 @@ class DdCiCamSlot;
 class DdCiAdapter: public cCiAdapter
 {
 private:
-	int fd;             //< .../frontendX/caX device file handle
-	cString caDevName;  //< .../frontendX/caX device path
+	int fd;             //< .../adapterX/caY device file handle
+	cString caDevName;  //< .../adapterX/caY device path
 	DdCiTsSend ciSend;  //< the CAM TS sender
 	DdCiTsRecv ciRecv;  //< the CAM TS receiver
 
@@ -68,11 +68,11 @@ public:
 	 * Constructor.
 	 * Checks for the available slots of the CAM and starts the
 	 * controlling thread.
-	 * @param ca_fd the file handle for the .../frontendX/caX device
-	 * @param ci_fdw the write file handle for the .../frontendX/ciX device
-	 * @param ci_fdr the read file handle for the .../frontendX/ciX device
-	 * @param devNameCa the name of the device (.../frontendX/caX)
-	 * @param devNameCi the name of the device (.../frontendX/ciX)
+	 * @param ca_fd the file handle for the .../adapterX/caY device
+	 * @param ci_fdw the write file handle for the .../adapterX/ciY device
+	 * @param ci_fdr the read file handle for the .../adapterX/ciY device
+	 * @param devNameCa the name of the device (.../adapterX/caY)
+	 * @param devNameCi the name of the device (.../adapterX/ciY)
 	 **/
 	DdCiAdapter( int ca_fd, int ci_fdw, int ci_fdr, cString &devNameCa, cString &devNameCi );
 

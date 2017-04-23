@@ -60,6 +60,8 @@
 
 #endif // DDCI_RB_CLR_MTX
 
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+
 static const int BUF_MARGIN = TS_SIZE;
 
 // global config options

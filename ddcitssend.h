@@ -46,8 +46,8 @@ class DdCiTsSend: public cThread
 {
 private:
 	DdCiAdapter &adapter;  //< the associated CI adapter
-	int fd;                //< .../frontendX/ciX device write file handle
-	cString ciDevName;     //< .../frontendX/ciX device path
+	int fd;                //< .../adapterX/ciY device write file handle
+	cString ciDevName;     //< .../adapterX/ciY device path
 	cRingBufferLinear rb;  //< the send buffer
 	cMutex mtxWrite;       //< The synchronization mutex for rb write access
 	int pkgCntR;           //< package read counter
@@ -66,8 +66,8 @@ public:
 	 * Constructor.
 	 * Creates a new CAM TS send buffer.
 	 * @param adapter the CAM adapter this slot is associated
-	 * @param ci_fdw open file handle for the .../frontendX/ciX device
-	 * @param devNameCi the name of the device (.../frontendX/ciX)
+	 * @param ci_fdw open file handle for the .../adapterX/ciY device
+	 * @param devNameCi the name of the device (.../adapterX/ciY)
 	 **/
 	DdCiTsSend( DdCiAdapter &the_adapter, int ci_fdw, cString &devNameCi );
 

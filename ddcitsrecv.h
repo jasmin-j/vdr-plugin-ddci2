@@ -47,8 +47,8 @@ class DdCiTsRecv: public cThread
 {
 private:
 	DdCiAdapter &adapter;  //< the associated CI adapter
-	int fd;                //< .../frontendX/ciX device read file handle
-	cString ciDevName;     //< .../frontendX/ciX device path
+	int fd;                //< .../adapterX/ciY device read file handle
+	cString ciDevName;     //< .../adapterX/ciY device path
 	cRingBufferLinear rb;  //< the CAM read buffer
 	int pkgCntR;           //< packages read from buffer
 	int pkgCntW;           //< packages written to buffer
@@ -67,8 +67,8 @@ public:
 	 * Constructor.
 	 * Creates a new CAM TS receiver object.
 	 * @param adapter the CAM adapter this slot is associated
-	 * @param ci_fdr open file handle for the .../frontendX/ciX device
-	 * @param devNameCi the name of the device (.../frontendX/ciX)
+	 * @param ci_fdr open file handle for the .../adapterX/ciY device
+	 * @param devNameCi the name of the device (.../adapterX/ciY)
 	 **/
 	DdCiTsRecv( DdCiAdapter &the_adapter, int ci_fdr, cString &devNameCi );
 
