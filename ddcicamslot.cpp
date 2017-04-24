@@ -43,7 +43,7 @@ void DdCiCamSlot::StopIt()
 {
 	cMutexLock MutexLock(&mtxRun);
 	active = false;
-	rBuffer.Clear();
+	clear_rBuffer = true;
 	delivered = false;
 	cntSctPkt = 0;
 	cntSctClrPkt = 0;
@@ -59,6 +59,7 @@ DdCiCamSlot::DdCiCamSlot( DdCiAdapter &adapter, DdCiTsSend &sendCi )
 : cCamSlot( &adapter, true )
 , theAdapter( adapter )
 , ciSend( sendCi )
+, clear_rBuffer( false )
 , delivered( false )
 , active( false )
 , cntSctPkt( 0 )
@@ -112,7 +113,7 @@ void DdCiCamSlot::StartDecrypting()
 	L_FUNC_NAME();
 
 
-	// to lock it against StopIt
+	// to lock the processing against StopIt
 	mtxRun.Lock();
 
 	active = true;
@@ -196,6 +197,12 @@ uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 		delivered = false;
 	}
 
+	if (clear_rBuffer) {
+		DDCI_RB_CLR_MTX_LOCK( &mtxClear );
+		rBuffer.Clear();
+		clear_rBuffer = false;
+	}
+
 	int cnt = 0;
 	uchar *data = rBuffer.Get( cnt );
 	if (!data || (cnt < TS_SIZE)) {
@@ -244,6 +251,7 @@ int DdCiCamSlot::DataRecv( uchar *data, int count )
 	} else
 #endif
 	{
+		DDCI_RB_CLR_MTX_LOCK( &mtxClear );
 		int free = rBuffer.Free();
 		free -= free % TS_SIZE;   // write only whole packets
 		if (free >= TS_SIZE) {

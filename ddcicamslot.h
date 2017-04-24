@@ -41,10 +41,12 @@ class DdCiTsSend;
  */
 class DdCiCamSlot: public cCamSlot
 {
+private:
 	DdCiAdapter &theAdapter; //< the adapter of this CAM slot
 	cMutex mtxRun;           //< the synchronization mutex for Start/StopDecrypting
 	DdCiTsSend &ciSend;      //< the CAM TS sender
 	DdCiRecvBuf rBuffer;     //< the receive buffer
+	bool clear_rBuffer;      //< true, when the receive buffer shall be cleared
 	bool delivered;          //< true, if Decrypt did deliver data at last call
 	bool active;             //< true, if this slot does decrypting
 	int cntSctPkt;           //< number of scrambled packets got from CAM
@@ -52,6 +54,7 @@ class DdCiCamSlot: public cCamSlot
 	int cntSctClrPkt;        //< number of cleared scrambling control bits
 	int cntSctDbg;           //< counter for scrambling control debugging
 	cTimeMs timSctDbg;       //< timer for scrambling control debugging
+	DDCI_RB_CLR_MTX_DECL(mtxClear);
 
 	void StopIt();
 
