@@ -1,6 +1,18 @@
 VDR Plugin 'ddci2' Revision History
 ----------------------------------
 
+2017-04-26 Version 1.0.4
+- Support adapterX/ciY and adapterX/secY devices. the latter are created
+  by the kernel with the recent DD drivers form the kernel merge project
+  from Daniel Scheller (see
+  https://github.com/herrnst/dddvb-linux-kernel/tree/mediatree/master-ddbridge).
+- Decrypt more packets at once with next VDR 2.3.4 (check Data pointer in
+  DdCiCamSlot::Decrypt).
+- Fixed deadlock with DdCiCamSlot::mtxRun.
+- Fixed a possible crash in non-MTD mode (reader side clearing in DdCiCamSlot).
+- Fixed a possible crash during VDR shutdown (PluginDdci::Stop does now stop all
+  threads only).
+
 2017-04-05 Version 1.0.3
 - Support non MCD CAMs for VDR 2.3.3 correctly.
 

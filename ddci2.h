@@ -37,9 +37,9 @@
 # define DDCI_RB_CLR_MTX  0    /* cRingBufferLinear::Clear is thread save, when
                                 * executed from reader thread */
 #else
-# define DDCI_MTD           0  // no MTD in older versions
-# define DDCI_RB_CLR_MTX    1  /* cRingBufferLinear::Clear is not thread save and
-                                * we need a mutex */
+# define DDCI_MTD         0  // no MTD in older versions
+# define DDCI_RB_CLR_MTX  1  /* cRingBufferLinear::Clear is not thread save and
+                              * we need a mutex */
 #endif
 
 #if (VDRVERSNUM >= 20304)

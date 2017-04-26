@@ -22,9 +22,10 @@ This plugin will work ONLY with VDR version 2.1.7 and newer.
 MTD support requires VDR version 2.3.3 and newer.
 
 The CI devices of Digital Devices or Linux4Media are not bound to a
-dedicated DVB adapter. There will be only a ca- and a ci-device. The
-ca-device has to be used like every other ca-device, but the packets
-to be descrambled have to be written to and read from the ci-device.
+dedicated DVB adapter. There will be only a ca- and a ci-device or
+sec-device. The ca-device has to be used like every other ca-device,
+but the packets to be descrambled have to be written to and read from
+the ci-device(sec-device).
 This plugin obsolets the redirect method of the ddbridge kernel driver.
 The Kernel driver must not started with option "adapter_alloc=1|2|3"!
 
