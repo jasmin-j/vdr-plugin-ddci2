@@ -113,6 +113,19 @@ public:
 	 **/
 	virtual uchar *Decrypt(uchar *Data, int &Count);
 
+	/**
+	 * For a detailed description have a look to file ci.h in the VDR include
+	 * directory.
+	 * This function will copy the given TS packet to the CAM TS send
+	 * buffer and return true if this was possible or false. In the latter case
+	 * nothing is copied at all.
+	 * @param Data the TS packet(s) to sent to the CAM; it have to point to the
+	 *        beginning of a packet (start with TS_SYNC_BYTE).
+	 * @param count the number of bytes in data (shall be at least TS_SIZE);
+	 *        have to be a multiple of TS_SIZE.
+	 * @return true ... Data copied
+	 *         false .. Nothing written to send buffer
+	 */
 	virtual bool Inject(uchar *Data, int Count);
 
 	/**

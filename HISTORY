@@ -1,6 +1,12 @@
 VDR Plugin 'ddci2' Revision History
 ----------------------------------
 
+2017-05-01 Version 1.0.5-rc1
+- Added DdCiCamSlot::Inject to inject arbitrary TS packets into the CAM TS
+  data stream.
+  DdCiTsSend::WriteAll: New function used by DdCiCamSlot::Inject which writes
+    all/or nothing to the send buffer. It is also Thread Save.
+
 2017-04-26 Version 1.0.4
 - Support adapterX/ciY and adapterX/secY devices. the latter are created
   by the kernel with the recent DD drivers form the kernel merge project

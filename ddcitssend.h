@@ -61,6 +61,13 @@ private:
 
 	void CleanUp();
 
+	/* Before calling this function, it needs to be checked that at least
+	 * count bytes are free in the buffer.
+	 * count will be set to the real written data size.
+	 * Returns false, if not count bytes could be written.
+	 */
+	bool PutAndCheck(const uchar *data, int &count);
+
 public:
 	/**
 	 * Constructor.
@@ -88,6 +95,16 @@ public:
 	 * @return the number of bytes actually written
 	 */
 	int Write(const uchar *data, int count);
+
+	/**
+	 * Write *all* or *nothing* of the given data to the send buffer.
+	 * This function is thread save for multiple writers.
+	 * @param data the data to send
+	 * @param count the length of the data (have to be a multiple of TS_SIZE!)
+	 * @return true ... data copied
+	 *         false .. no data written to buffer
+	 */
+	bool WriteAll(const uchar *data, int count);
 
 	/**
 	 * Waits for data present in the send buffer and tries to send them to

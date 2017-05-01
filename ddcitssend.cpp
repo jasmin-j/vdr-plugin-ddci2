@@ -50,6 +50,22 @@ void DdCiTsSend::CleanUp()
 
 //------------------------------------------------------------------------
 
+bool DdCiTsSend::PutAndCheck(const uchar *data, int &count)
+{
+	bool ret = true;
+
+	int written = rb.Put( data, count );
+	pkgCntW += written / TS_SIZE;
+	if (written != count) {
+		L_ERR_LINE( "Couldn't write previously checked free data ?!?" );
+		ret = false;
+	}
+	count = written;
+	return ret;
+}
+
+//------------------------------------------------------------------------
+
 DdCiTsSend::DdCiTsSend( DdCiAdapter &the_adapter, int ci_fdw, cString &devNameCi )
 : cThread()
 , adapter( the_adapter )
@@ -129,21 +145,32 @@ int DdCiTsSend::Write( const uchar *data, int count )
 {
 	cMutexLock MutexLockW( &mtxWrite );
 
-	int written = 0;
-
 	DDCI_RB_CLR_MTX_LOCK( &mtxClear )
 	int free = rb.Free();
 	if (free > count)
 		free = count;
-	free -= free % TS_SIZE;     // only whole TS frames must be written
-	if (free > 0) {
-		written = rb.Put( data, free );
-		pkgCntW += written / TS_SIZE;
-		if (written != free)
-			L_ERR_LINE( "Couldn't write previously checked free data ?!?" );
-	}
+	free -= free % TS_SIZE;  // only whole TS frames must be written
+	if (free > 0)
+		PutAndCheck( data, free );
 
-	return written;
+	return free;
+}
+
+//------------------------------------------------------------------------
+
+bool DdCiTsSend::WriteAll( const uchar *data, int count )
+{
+	cMutexLock MutexLockW( &mtxWrite );
+
+	if (count % TS_SIZE)  // have to be a multiple of TS_SIZE
+		return false;
+
+	DDCI_RB_CLR_MTX_LOCK( &mtxClear )
+	int free = rb.Free();
+	if (free < count)  // all the packets need to be written at once
+		return false;
+
+	return PutAndCheck( data, count );
 }
 
 //------------------------------------------------------------------------
