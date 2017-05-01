@@ -237,6 +237,13 @@ uchar *DdCiCamSlot::Decrypt( uchar *Data, int &Count )
 
 //------------------------------------------------------------------------
 
+bool DdCiCamSlot::Inject(uchar *Data, int Count)
+{
+	return ciSend.Write( Data, Count ) == Count;
+}
+
+//------------------------------------------------------------------------
+
 int DdCiCamSlot::DataRecv( uchar *data, int count )
 {
 	if (!(active || CfgIgnAct())) {

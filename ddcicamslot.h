@@ -113,6 +113,8 @@ public:
 	 **/
 	virtual uchar *Decrypt(uchar *Data, int &Count);
 
+	virtual bool Inject(uchar *Data, int Count);
+
 	/**
 	 * Deliver the received CAM TS Data to the CAM slot.
 	 * @param data the received TS packet(s) from the CAM; it have to point to
