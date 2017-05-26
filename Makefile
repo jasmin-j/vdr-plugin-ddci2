@@ -99,6 +99,7 @@ OBJS = $(OBJS_C) $(OBJS_CXX)
 ### The main target:
 
 all: $(SOFILE)
+	@true
 
 ### Implicit rules:
 
@@ -137,3 +138,4 @@ dist: clean
 
 clean:
 	@-rm -f $(OBJS) $(DEPFILE) *.so *.tgz core* *~ *.ii *.s
+
