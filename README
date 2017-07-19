@@ -58,6 +58,9 @@ I am not sure, but I guess the currect driver is not correctly implemented for
 some CI slot drivers. Thus we still require the active flag on some DD CI hardware.
 I decided to generaly activate it. You can try to set "-A" to ignore it. If it
 works, the channel switchover to a decrypted channel should be faster.
+UPDATE: This has been fixed in the driver, but you need a very recent version.
+        AFAIK this is available currentl only in the driver from from herrnst
+        (see below).
 
 The default loglevel is info.
 The default debug logging mask is 0x0001. You can use option -d several
@@ -80,30 +83,13 @@ Building the plugin
 **
 **  NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
 **
-**  This Plugin reqires version 0.9.13 of the ddbridge Kernel driver suite
-**  available here:
-**    http://download.digital-devices.de/download/linux/
-**
-**  And the Remove_188_byte_limit_in_ts_write patch available here:
-**    http://www.vdr-portal.de/board18-vdr-hardware/board102-dvb-karten/\
-**     p1194480-treiber-der-cine-ctv6-ddbridge-ci-in-den-kernel-integrieren/\
-**     #post1194480
-**
-**  Direct link to the patch:
-**    www.vdr-portal.de/index.php?page=Attachment&attachmentID=35912&h=\
-**     73638522919b01e62dd16780bac6bd2fff4ee724 
-**
-**  Hopefully this patch will be soon integrated to the ddbridge Kernel
-**  driver suite.
-**
-**
-**  There are ready made DKMS packages, which contains the patch already.
-**  Have a look to:
-**   - http://linuxtv.org/hg/~endriss/media_build_experimental
-**   - https://launchpad.net/~yavdr/+archive/unstable-main/+packages
-**       -> media-build-experimental-dkms - xxxxxxxxxxxx
-**     or
-**       -> dddvb-dkms - X.Y.Z.xxxxxx   
+**  This Plugin reqires a recent version of the ddbridge Kernel driver suite.
+**  You can find it here:
+**    https://github.com/DigitalDevices/dddvb
+**  or:
+**    https://github.com/herrnst/dddvb-linux-kernel/tree/mediatree/master-ddbridge
+**  The latter a version which can be used with all cards supported by the
+**  Kernel. The first with *only* Digital Devices cards.
 **
 **  NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
 **
