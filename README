@@ -70,7 +70,9 @@ times. All the values are ORed to one mask. Don't forget the "0x"!
 Pitfalls
 --------
 
-If you see this message in syslog:
+If you see this messages in syslog:
+  DDCI-Inf: no DD CI adapter found
+and/or
   DDCI-Err (ddci2.cpp,110): Couldn't open /dev/dvb/adapterX/ciY with mode 0x800:
           Device or resource busy
 then you might forget to remove the redirect assignment in the driver.

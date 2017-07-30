@@ -112,7 +112,6 @@ void DdCiCamSlot::StartDecrypting()
 
 	L_FUNC_NAME();
 
-
 	// to lock the processing against StopIt
 	mtxRun.Lock();
 
